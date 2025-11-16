@@ -26,7 +26,9 @@ A first-person web-based submarine exploration and collection game where players
 - **Movement Style**: Arcade-style (not physics-based simulation)
 - **Health System**: Armor points that deplete from attacks/hazards
 - **Oxygen System**: Depletes over time, must surface to refill
-- **Death Condition**: If armor reaches zero before surfacing, player dies and respawns
+  - **Emergency Oxygen**: When oxygen reaches 0%, player has 10-15 seconds of warning (alarms, visual effects) before death
+  - Allows last-chance surface attempts, more forgiving than instant death
+- **Death Condition**: If armor reaches zero OR emergency oxygen runs out, player dies and respawns
 
 #### 1.2 Sample Collection
 - **Collection Method**: Equippable tools/nets or shooting mechanisms
@@ -34,6 +36,8 @@ A first-person web-based submarine exploration and collection game where players
 - **Sample Behavior**: Some samples are passive, others fight back or flee
 - **Targeting**: Manual aiming required
 - **Inventory**: Can carry multiple samples (specific capacity based on upgrades)
+  - Samples are stored as static items (not alive in inventory)
+  - No special storage requirements beyond capacity upgrades
 
 #### 1.3 Combat & Threats
 - **Hostile Creatures**: Aggressive sea life that attacks the submarine
@@ -72,20 +76,34 @@ A first-person web-based submarine exploration and collection game where players
 - **Biome Variation**: Visual and gameplay differences per zone
 
 #### 3.3 Lighting & Visibility
-- **Time of Day**: Always daytime at surface
+- **Time of Day**: Day/night cycle at surface (visual only, no gameplay impact)
+  - Atmospheric lighting changes
+  - Surface ambiance varies
 - **Depth Lighting**: Gets progressively darker with depth
 - **Submarine Lights**: Illuminate surroundings (range based on upgrades)
+
+#### 3.4 Environmental Storytelling
+- **Ruins & Wreckage**: Discover ancient underwater ruins, sunken ships, abandoned research equipment
+- **Exploration Incentive**: Hidden areas reward curious players
+- **Lore Elements**: Environmental clues about the ocean's history
+- **Discoverable Collectibles**: Optional lore pieces that unlock permanently (meta-progression)
+- **Visual Narrative**: Tell stories through environment design, not just text
 
 ### 4. Research Ship (Hub)
 
 #### 4.1 Functionality
-- **Type**: Interactive 3D environment
+- **Type**: Interactive 3D environment with crew NPCs
 - **Location**: Always at the surface, repositions to where player surfaces
+- **Crew NPCs**: Interactive characters for each station
+  - Quest Officer (manages quests)
+  - Engineer (handles upgrades)
+  - Mechanic (repairs submarine)
+  - Scientist (provides lore, statistics)
 - **Interactions**:
-  - Quest terminal (accept/complete quests)
-  - Upgrade station (purchase upgrades)
-  - Repair station (restore armor, costs research credits)
-  - Statistics/leaderboard display
+  - Quest terminal (accept/complete quests via Quest Officer)
+  - Upgrade station (purchase upgrades from Engineer)
+  - Repair station (restore armor via Mechanic, costs research credits)
+  - Statistics/leaderboard display (Scientist NPC)
 
 #### 4.2 Resurfacing
 - **Automatic Positioning**: Ship is always where you surface
@@ -95,11 +113,15 @@ A first-person web-based submarine exploration and collection game where players
 ### 5. Progression & Economy
 
 #### 5.1 Research Credits
-- **Earning**: Complete quests
+- **Earning Methods**:
+  - **Primary**: Complete quests (full value)
+  - **Secondary**: Sell non-quest samples to research ship (30-50% of quest value)
+  - Creates strategic choice: fulfill quests or collect extras for bonus credits
 - **Spending**:
   - Purchase upgrades (one-time costs)
   - Repair armor (ongoing cost based on damage)
 - **Scaling**: Quest rewards scale with difficulty
+- **Economy Balance**: Quest-based income is primary, sample selling is supplementary
 
 #### 5.2 Upgrade System
 
@@ -154,6 +176,36 @@ A first-person web-based submarine exploration and collection game where players
 - **Quest Difficulty**: Scales with available upgrades
 - **Sample Accessibility**: Rarer samples in deeper zones
 
+#### 5.4 Meta-Progression System
+**Concept**: Certain unlocks and discoveries persist across deaths, rewarding exploration and experimentation
+
+**What Persists Across Deaths:**
+- **Discovered Sample Types**: Once found, samples appear in encyclopedia/codex permanently
+- **Lore Pieces**: Environmental storytelling discoveries (ruins, wreckage clues)
+- **Achievement Unlocks**: Milestone achievements (e.g., "Reach 200m depth", "Collect 100 samples")
+- **Sample Bestiary**: Information about creatures and samples
+- **Zone Discoveries**: First-time discovery of biomes/areas
+- **Special Tool Blueprints**: Rare discoveries that unlock new tool types permanently
+
+**What Resets on Death:**
+- Current inventory (collected samples)
+- Current position
+- Active quest progress (quests remain, but collected samples lost)
+- Research credits (earned credits persist, but current dive's undelivered samples lost)
+- Oxygen/armor (reset to max)
+
+**Meta-Progression Benefits:**
+- **Knowledge Accumulation**: Learn optimal routes, creature patterns, sample locations
+- **Permanent Unlocks**: Discover new tools, zones, or mechanics
+- **Achievement Rewards**: Some achievements grant small permanent bonuses (e.g., +5% oxygen capacity)
+- **Collection Goals**: Work toward 100% sample discovery
+
+**Implementation Notes:**
+- Use separate save data for meta-progression vs current run
+- Visual indicators for "first discovery" moments
+- Encyclopedia/codex UI to track discoveries
+- Optional achievement system with tiered rewards
+
 ### 6. Samples & Creatures
 
 #### 6.1 Sample Categories
@@ -167,6 +219,10 @@ A first-person web-based submarine exploration and collection game where players
 - **Territorial**: Attack if player gets too close
 - **Predatory**: Actively hunt player
 - **Damage Scaling**: Deeper creatures deal more damage
+- **Rare Drops**: Aggressive creatures have a chance to drop rare samples when defeated
+  - Incentivizes combat beyond just defense
+  - Higher-tier creatures = better drop chances
+  - Risk/reward balance for engaging vs avoiding
 
 ### 7. UI/UX Requirements
 
@@ -189,7 +245,8 @@ A first-person web-based submarine exploration and collection game where players
 
 #### 8.1 Platform
 - **Type**: Web-based game
-- **Suggested Engine**: Three.js or Babylon.js
+- **Engine**: Babylon.js (chosen for built-in physics, collision detection, audio, and input systems)
+- **Build Tool**: Vite (fast dev server, hot module reload)
 - **Target**: Modern browsers (Chrome, Firefox, Safari, Edge)
 - **Performance**: 60 FPS target on mid-range hardware
 
@@ -265,9 +322,11 @@ A first-person web-based submarine exploration and collection game where players
 - ✅ Environmental hazards (pressure damage if too deep)
 - ✅ Death & respawn system
 - ✅ Sample loss on death
+- ✅ Emergency oxygen mechanic (10-15s warning before death)
 - ✅ 2-3 evasive sample types
 - ✅ Biome visual differences
 - ✅ Armor upgrade system
+- ✅ Rare sample drops from defeated creatures
 
 **Success Criteria**: Can upgrade to reach deeper zones, face threats, risk/reward decision-making
 
@@ -283,6 +342,7 @@ A first-person web-based submarine exploration and collection game where players
 - ✅ All 8 upgrade categories implemented
 - ✅ Upgrade dependencies
 - ✅ Repair system (costs credits)
+- ✅ Sample selling system (non-quest samples for 30-50% value)
 - ✅ 5-6 collection tools/weapons (switchable)
 - ✅ Tool requirements for certain samples
 - ✅ 10+ sample types across all zones
@@ -296,8 +356,11 @@ A first-person web-based submarine exploration and collection game where players
 **Goal**: Full gameplay experience
 
 **Features**:
-- ✅ 3D interactive research ship hub
+- ✅ 3D interactive research ship hub with crew NPCs
+  - Quest Officer, Engineer, Mechanic, Scientist NPCs
 - ✅ Ship repositioning when surfacing
+- ✅ Day/night cycle at surface (visual only)
+- ✅ Environmental storytelling (ruins, wreckage, abandoned equipment)
 - ✅ 15-20 unique sample types
 - ✅ 10+ creature types with varied AI
 - ✅ Sonar/mini-map system
@@ -316,6 +379,11 @@ A first-person web-based submarine exploration and collection game where players
 **Goal**: Long-term engagement
 
 **Features**:
+- ✅ Meta-progression system
+  - Encyclopedia/codex for discovered samples
+  - Persistent lore collection
+  - Achievement unlocks with permanent bonuses
+  - Tool blueprint discoveries
 - ✅ Leaderboard system
 - ✅ Achievement/milestone system
 - ✅ Statistics tracking
@@ -336,11 +404,12 @@ A first-person web-based submarine exploration and collection game where players
 - Seasonal events/quests
 - New biomes/zones
 - Photo mode (document discoveries)
-- Sample encyclopedia/codex
 - Custom submarine cosmetics
 - Speedrun modes
 - Daily/weekly challenges
-- Save/load system improvements
+- Multiplayer cooperative expeditions
+- Additional tool types and upgrades
+- Dynamic weather at surface
 
 ---
 
@@ -363,29 +432,32 @@ A first-person web-based submarine exploration and collection game where players
 
 ---
 
-## Open Questions
-
-1. **Should some samples be "alive" in inventory and require specific storage upgrades?** No
-2. **Should there be a day/night cycle at surface (visual only, no gameplay impact)?** Sure
-3. **Should research ship have crew NPCs or just UI terminals?** Crew NPCs
-4. **Should there be any meta-progression (unlocks that persist across deaths)?** Yes
-5. **Should rare samples have a chance to drop from aggressive creatures?** Yes
-6. **Should there be environmental storytelling (ruins, wreckage, etc.)?** Yes
-7. **Should oxygen be a hard limit or allow brief "emergency" time at risk?**  Emergency time
-8. **Should there be any passive income or is it purely quest-based?** quest based. You can credit for samples, not in quest but then you do not get a lot of money/credits.
-
----
-
 ## Next Steps
 
-1. Review and finalize requirements
-2. Set up development environment
-3. Choose web game engine (Three.js vs Babylon.js) your choice 
-4. Create technical architecture document (CLAUDE.md)
-5. Begin Phase 1 prototype development
+1. ✅ Review and finalize requirements
+2. ✅ Choose web game engine (Babylon.js selected)
+3. ✅ Create technical architecture document (CLAUDE.md)
+4. **Next**: Set up development environment
+5. **Next**: Begin Phase 1 prototype development
 
 ---
 
-**Document Version**: 1.0
+## Design Decisions Log
+
+All major design questions have been resolved and integrated into the requirements:
+
+- ✅ **Inventory System**: Samples stored as static items (not alive)
+- ✅ **Day/Night Cycle**: Visual-only cycle at surface for atmosphere
+- ✅ **Research Ship**: Interactive 3D hub with crew NPCs
+- ✅ **Meta-Progression**: Discovery/achievement system that persists across deaths
+- ✅ **Creature Drops**: Rare samples can drop from defeated aggressive creatures
+- ✅ **Environmental Storytelling**: Ruins, wreckage, lore elements throughout zones
+- ✅ **Emergency Oxygen**: 10-15 second grace period with warnings when oxygen depletes
+- ✅ **Sample Selling**: Can sell non-quest samples for 30-50% value (supplementary income)
+- ✅ **Game Engine**: Babylon.js chosen for integrated physics/audio/collision systems
+
+---
+
+**Document Version**: 2.0
 **Last Updated**: 2025-11-16
-**Status**: Draft - Pending Review
+**Status**: Finalized - Ready for Development
