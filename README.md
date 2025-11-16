@@ -365,14 +365,14 @@ A first-person web-based submarine exploration and collection game where players
 
 ## Open Questions
 
-1. **Should some samples be "alive" in inventory and require specific storage upgrades?**
-2. **Should there be a day/night cycle at surface (visual only, no gameplay impact)?**
-3. **Should research ship have crew NPCs or just UI terminals?**
-4. **Should there be any meta-progression (unlocks that persist across deaths)?**
-5. **Should rare samples have a chance to drop from aggressive creatures?**
-6. **Should there be environmental storytelling (ruins, wreckage, etc.)?**
-7. **Should oxygen be a hard limit or allow brief "emergency" time at risk?**
-8. **Should there be any passive income or is it purely quest-based?**
+1. **Should some samples be "alive" in inventory and require specific storage upgrades?** No
+2. **Should there be a day/night cycle at surface (visual only, no gameplay impact)?** Sure
+3. **Should research ship have crew NPCs or just UI terminals?** Crew NPCs
+4. **Should there be any meta-progression (unlocks that persist across deaths)?** Yes
+5. **Should rare samples have a chance to drop from aggressive creatures?** Yes
+6. **Should there be environmental storytelling (ruins, wreckage, etc.)?** Yes
+7. **Should oxygen be a hard limit or allow brief "emergency" time at risk?**  Emergency time
+8. **Should there be any passive income or is it purely quest-based?** quest based. You can credit for samples, not in quest but then you do not get a lot of money/credits.
 
 ---
 
@@ -380,7 +380,7 @@ A first-person web-based submarine exploration and collection game where players
 
 1. Review and finalize requirements
 2. Set up development environment
-3. Choose web game engine (Three.js vs Babylon.js)
+3. Choose web game engine (Three.js vs Babylon.js) your choice 
 4. Create technical architecture document (CLAUDE.md)
 5. Begin Phase 1 prototype development
 
