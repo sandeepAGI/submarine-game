@@ -28,6 +28,8 @@ class Game {
     // Game state
     this.credits = 0;
     this.gameStarted = false;
+    this.lastUIOpenTime = 0;
+    this.uiOpenCooldown = 0.5; // 500ms cooldown
 
     // Systems
     this.questSystem = null;
@@ -155,9 +157,14 @@ class Game {
     const atSurface = this.ocean.isAtSurface(this.submarine.position);
     const nearShip = this.submarine.position.length() < 10; // Within 10 meters of origin
 
-    // Listen for E key to open UI
-    if (atSurface && nearShip && this.input.isKeyPressed('e') && !this.researchShipUI.isOpen()) {
+    // Update cooldown timer
+    this.lastUIOpenTime += this.engine.engine.getDeltaTime() / 1000;
+
+    // Listen for E key to open UI with cooldown
+    if (atSurface && nearShip && this.input.isKeyPressed('e') &&
+        !this.researchShipUI.isOpen() && this.lastUIOpenTime >= this.uiOpenCooldown) {
       this.openResearchShipUI();
+      this.lastUIOpenTime = 0; // Reset cooldown
     }
   }
 

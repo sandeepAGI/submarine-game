@@ -7,20 +7,26 @@ export class CollectionSystem {
   constructor(input) {
     this.input = input;
     this.onSampleCollected = null; // Callback
+    this.lastCollectTime = 0;
+    this.collectCooldown = 0.3; // 300ms cooldown between collections
   }
 
   update(deltaTime, entities) {
     const submarine = entities.submarine;
     if (!submarine) return;
 
-    // Check for collection input (E key)
-    if (this.input.isKeyPressed('e') && submarine.canCollectMore()) {
-      this.tryCollectNearestSample(submarine, entities.samples);
+    this.lastCollectTime += deltaTime;
+
+    // Check for collection input (E key) with cooldown
+    if (this.input.isKeyPressed('e') && submarine.canCollectMore() && this.lastCollectTime >= this.collectCooldown) {
+      if (this.tryCollectNearestSample(submarine, entities.samples)) {
+        this.lastCollectTime = 0; // Reset cooldown timer
+      }
     }
   }
 
   tryCollectNearestSample(submarine, samples) {
-    if (samples.length === 0) return;
+    if (samples.length === 0) return false;
 
     // Find nearest uncollected sample within range
     let nearest = null;
@@ -46,8 +52,11 @@ export class CollectionSystem {
         if (this.onSampleCollected) {
           this.onSampleCollected(sampleData);
         }
+        return true;
       }
     }
+
+    return false;
   }
 
   setSampleCollectedCallback(callback) {
