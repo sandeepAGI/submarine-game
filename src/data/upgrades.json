@@ -1,0 +1,34 @@
+{
+  "oxygen": [
+    {
+      "tier": 1,
+      "name": "Basic Oxygen Tank",
+      "maxOxygen": 60,
+      "cost": 0,
+      "description": "Standard oxygen supply. 60 seconds underwater."
+    },
+    {
+      "tier": 2,
+      "name": "Extended Oxygen Tank",
+      "maxOxygen": 120,
+      "cost": 200,
+      "description": "Double capacity oxygen tank. 120 seconds underwater."
+    }
+  ],
+  "speed": [
+    {
+      "tier": 1,
+      "name": "Standard Engine",
+      "speedMultiplier": 1.0,
+      "cost": 0,
+      "description": "Basic submarine engine."
+    },
+    {
+      "tier": 2,
+      "name": "Enhanced Engine",
+      "speedMultiplier": 1.5,
+      "cost": 150,
+      "description": "50% faster movement speed."
+    }
+  ]
+}

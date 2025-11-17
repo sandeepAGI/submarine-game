@@ -1,0 +1,54 @@
+{
+  "samples": [
+    {
+      "id": "kelp",
+      "name": "Kelp",
+      "type": "passive",
+      "zones": ["shallow"],
+      "rarity": "common",
+      "creditValue": 10,
+      "color": "#2d5016",
+      "size": 1.5
+    },
+    {
+      "id": "shell",
+      "name": "Conch Shell",
+      "type": "passive",
+      "zones": ["shallow"],
+      "rarity": "common",
+      "creditValue": 15,
+      "color": "#f4a460",
+      "size": 0.8
+    },
+    {
+      "id": "coral",
+      "name": "Coral Fragment",
+      "type": "passive",
+      "zones": ["shallow"],
+      "rarity": "common",
+      "creditValue": 20,
+      "color": "#ff6b6b",
+      "size": 1.0
+    },
+    {
+      "id": "smallfish",
+      "name": "Small Fish",
+      "type": "passive",
+      "zones": ["shallow"],
+      "rarity": "common",
+      "creditValue": 25,
+      "color": "#4ecdc4",
+      "size": 0.5
+    },
+    {
+      "id": "starfish",
+      "name": "Starfish",
+      "type": "passive",
+      "zones": ["shallow"],
+      "rarity": "uncommon",
+      "creditValue": 30,
+      "color": "#ff9ff3",
+      "size": 0.7
+    }
+  ]
+}

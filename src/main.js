@@ -1,0 +1,214 @@
+import * as BABYLON from '@babylonjs/core';
+import { Engine } from './core/Engine.js';
+import { Input } from './core/Input.js';
+import { Ocean } from './world/Ocean.js';
+import { Submarine } from './entities/Submarine.js';
+import { Sample } from './entities/Sample.js';
+import { MovementSystem } from './systems/MovementSystem.js';
+import { OxygenSystem } from './systems/OxygenSystem.js';
+import { CollectionSystem } from './systems/CollectionSystem.js';
+import { QuestSystem } from './systems/QuestSystem.js';
+import { UpgradeSystem } from './systems/UpgradeSystem.js';
+import { HUD } from './ui/HUD.js';
+import { ResearchShipUI } from './ui/ResearchShipUI.js';
+import samplesData from './data/samples.json';
+
+/**
+ * Main Game Class
+ */
+class Game {
+  constructor() {
+    this.engine = null;
+    this.input = null;
+    this.ocean = null;
+    this.submarine = null;
+    this.hud = null;
+    this.researchShipUI = null;
+
+    // Game state
+    this.credits = 0;
+    this.gameStarted = false;
+
+    // Systems
+    this.questSystem = null;
+    this.upgradeSystem = null;
+    this.movementSystem = null;
+    this.oxygenSystem = null;
+    this.collectionSystem = null;
+  }
+
+  async init() {
+    const canvas = document.getElementById('renderCanvas');
+
+    // Create engine
+    this.engine = new Engine(canvas);
+    this.engine.init();
+
+    // Create input system
+    this.input = new Input(this.engine.scene);
+
+    // Create ocean
+    this.ocean = new Ocean(this.engine.scene);
+    this.ocean.create();
+
+    // Create submarine
+    this.submarine = new Submarine(this.engine.scene, this.engine.camera);
+    this.engine.addEntity('submarine', this.submarine);
+
+    // Spawn samples
+    this.spawnSamples(15);
+
+    // Create game systems
+    this.questSystem = new QuestSystem();
+    this.upgradeSystem = new UpgradeSystem();
+
+    this.movementSystem = new MovementSystem(this.input);
+    this.oxygenSystem = new OxygenSystem(this.ocean);
+    this.collectionSystem = new CollectionSystem(this.input);
+
+    // Setup oxygen depletion callback
+    this.oxygenSystem.setOxygenDepletedCallback(() => {
+      this.handleOxygenDepleted();
+    });
+
+    // Setup collection callback
+    this.collectionSystem.setSampleCollectedCallback((sample) => {
+      this.handleSampleCollected(sample);
+    });
+
+    // Add systems to engine
+    this.engine.addSystem(this.movementSystem);
+    this.engine.addSystem(this.oxygenSystem);
+    this.engine.addSystem(this.collectionSystem);
+
+    // Add HUD update system
+    this.engine.addSystem({
+      update: () => this.updateHUD(),
+    });
+
+    // Add research ship interaction system
+    this.engine.addSystem({
+      update: () => this.checkResearchShipInteraction(),
+    });
+
+    // Create UI
+    this.hud = new HUD();
+    this.researchShipUI = new ResearchShipUI(this.questSystem, this.upgradeSystem);
+
+    // Setup UI callbacks
+    this.researchShipUI.setCallbacks({
+      onQuestAccepted: (quest) => this.handleQuestAccepted(quest),
+      onQuestCompleted: (quest, reward) => this.handleQuestCompleted(quest, reward),
+      onUpgradePurchased: (result) => this.handleUpgradePurchased(result),
+    });
+
+    // Expose UI to window for button onclick handlers
+    window.researchShipUI = this.researchShipUI;
+    window.game = this;
+
+    // Start game
+    this.engine.start();
+    this.gameStarted = true;
+
+    this.hud.showMessage('Welcome to Submarine Sample Collection!');
+    this.hud.showMessage('Click to lock mouse. WASD to move, Space/Shift for up/down');
+  }
+
+  spawnSamples(count) {
+    const samples = samplesData.samples;
+    const oceanSize = 200;
+    const minDepth = -10;
+    const maxDepth = -45;
+
+    for (let i = 0; i < count; i++) {
+      // Random sample type
+      const sampleData = samples[Math.floor(Math.random() * samples.length)];
+
+      // Random position
+      const x = (Math.random() - 0.5) * oceanSize * 0.8;
+      const z = (Math.random() - 0.5) * oceanSize * 0.8;
+      const y = minDepth + Math.random() * (maxDepth - minDepth);
+
+      const position = new BABYLON.Vector3(x, y, z);
+      const sample = new Sample(this.engine.scene, sampleData, position);
+
+      this.engine.addEntity('sample', sample);
+    }
+  }
+
+  updateHUD() {
+    const gameState = {
+      oxygenPercent: this.submarine.getOxygenPercentage(),
+      depth: this.submarine.depth,
+      credits: this.credits,
+      inventoryCount: this.submarine.inventory.length,
+      inventoryMax: this.submarine.inventoryCapacity,
+      activeQuest: this.questSystem.getActiveQuest(),
+      inventory: this.submarine.inventory,
+    };
+
+    this.hud.update(gameState);
+  }
+
+  checkResearchShipInteraction() {
+    // Check if at surface and near research ship (position 0,0,0)
+    const atSurface = this.ocean.isAtSurface(this.submarine.position);
+    const nearShip = this.submarine.position.length() < 10; // Within 10 meters of origin
+
+    // Listen for E key to open UI
+    if (atSurface && nearShip && this.input.isKeyPressed('e') && !this.researchShipUI.isOpen()) {
+      this.openResearchShipUI();
+    }
+  }
+
+  openResearchShipUI() {
+    this.researchShipUI.open(this.submarine, this.credits);
+    this.hud.showMessage('Research Ship Interface Opened');
+  }
+
+  closeUI() {
+    this.researchShipUI.close();
+  }
+
+  handleSampleCollected(sample) {
+    this.hud.showMessage(`Collected: ${sample.name}`);
+  }
+
+  handleQuestAccepted(quest) {
+    this.hud.showMessage(`Quest Accepted: ${quest.name}`);
+  }
+
+  handleQuestCompleted(quest, reward) {
+    this.credits += reward;
+    this.hud.showMessage(`Quest Completed! +${reward} credits`);
+  }
+
+  handleUpgradePurchased(result) {
+    this.credits -= result.cost;
+
+    // Apply upgrade to submarine
+    if (result.category === 'oxygen') {
+      this.submarine.upgradeOxygen(result.upgrade.maxOxygen);
+      this.hud.showMessage(`Upgraded: ${result.upgrade.name}`);
+    } else if (result.category === 'speed') {
+      this.submarine.upgradeSpeed(result.upgrade.speedMultiplier);
+      this.hud.showMessage(`Upgraded: ${result.upgrade.name}`);
+    }
+  }
+
+  handleOxygenDepleted() {
+    this.hud.showMessage('OXYGEN DEPLETED! Respawning...', 2000);
+
+    // Respawn submarine
+    setTimeout(() => {
+      this.submarine.respawn();
+      this.hud.showMessage('Respawned at surface. Inventory lost.');
+    }, 2000);
+  }
+}
+
+// Initialize game when page loads
+window.addEventListener('DOMContentLoaded', () => {
+  const game = new Game();
+  game.init();
+});
