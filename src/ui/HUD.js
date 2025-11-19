@@ -41,7 +41,7 @@ export class HUD {
     if (gameState.activeQuest) {
       this.updateQuestDisplay(gameState.activeQuest, gameState.inventory);
     } else {
-      this.questDisplay.innerHTML = '<div class="quest-item">No active quest. Press [E] at surface.</div>';
+      this.questDisplay.innerHTML = '<div class="quest-item"><strong>NO ACTIVE QUEST</strong><br>Surface near the ORANGE SHIP<br>Press [E] to interact</div>';
     }
   }
 

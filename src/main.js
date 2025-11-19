@@ -4,6 +4,7 @@ import { Input } from './core/Input.js';
 import { Ocean } from './world/Ocean.js';
 import { Submarine } from './entities/Submarine.js';
 import { Sample } from './entities/Sample.js';
+import { ResearchShip } from './entities/ResearchShip.js';
 import { MovementSystem } from './systems/MovementSystem.js';
 import { OxygenSystem } from './systems/OxygenSystem.js';
 import { CollectionSystem } from './systems/CollectionSystem.js';
@@ -22,6 +23,7 @@ class Game {
     this.input = null;
     this.ocean = null;
     this.submarine = null;
+    this.researchShip = null;
     this.hud = null;
     this.researchShipUI = null;
 
@@ -52,6 +54,10 @@ class Game {
     // Create ocean
     this.ocean = new Ocean(this.engine.scene);
     this.ocean.create();
+
+    // Create research ship at surface
+    this.researchShip = new ResearchShip(this.engine.scene);
+    this.engine.addEntity('researchShip', this.researchShip);
 
     // Create submarine
     this.submarine = new Submarine(this.engine.scene, this.engine.camera);
@@ -112,8 +118,22 @@ class Game {
     this.engine.start();
     this.gameStarted = true;
 
-    this.hud.showMessage('Welcome to Submarine Sample Collection!');
-    this.hud.showMessage('Click to lock mouse. WASD to move, Space/Shift for up/down');
+    // Show tutorial messages
+    setTimeout(() => {
+      this.hud.showMessage('=== WELCOME TO SUBMARINE SAMPLE COLLECTION ===', 5000);
+    }, 500);
+
+    setTimeout(() => {
+      this.hud.showMessage('CONTROLS: WASD=Move, Mouse=Look, SPACE=Up, SHIFT=Down, E=Interact/Collect', 6000);
+    }, 2000);
+
+    setTimeout(() => {
+      this.hud.showMessage('OBJECTIVE: Press E at the ORANGE RESEARCH SHIP to accept a quest', 6000);
+    }, 4500);
+
+    setTimeout(() => {
+      this.hud.showMessage('The orange ship is right in front of you! Swim to it and press E', 6000);
+    }, 7500);
   }
 
   spawnSamples(count) {

@@ -18,11 +18,14 @@ export class Input {
     this.scene.actionManager = new BABYLON.ActionManager(this.scene);
 
     window.addEventListener('keydown', (evt) => {
+      // Use both evt.key and evt.code for better compatibility
       this.keys[evt.key.toLowerCase()] = true;
+      this.keys[evt.code.toLowerCase()] = true;
     });
 
     window.addEventListener('keyup', (evt) => {
       this.keys[evt.key.toLowerCase()] = false;
+      this.keys[evt.code.toLowerCase()] = false;
     });
 
     // Mouse movement for camera

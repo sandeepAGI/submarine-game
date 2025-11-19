@@ -9,7 +9,7 @@ export class Submarine {
     this.scene = scene;
     this.camera = camera;
     this.mesh = null;
-    this.position = new BABYLON.Vector3(0, -5, 0);
+    this.position = new BABYLON.Vector3(0, -1, 0); // Start at surface
     this.rotation = new BABYLON.Vector3(0, 0, 0);
 
     // Submarine state
@@ -28,19 +28,19 @@ export class Submarine {
   }
 
   create() {
-    // Create submarine mesh (simple capsule for now)
-    this.mesh = BABYLON.MeshBuilder.CreateCapsule(
+    // Create submarine mesh (box shape - naturally horizontal)
+    this.mesh = BABYLON.MeshBuilder.CreateBox(
       'submarine',
       {
-        radius: 1,
-        height: 4,
-        capSubdivisions: 6,
+        width: 2,    // X axis (left-right)
+        height: 1.5, // Y axis (up-down)
+        depth: 4,    // Z axis (forward-backward)
       },
       this.scene
     );
 
-    // Rotate to face forward (along Z axis)
-    this.mesh.rotation.x = Math.PI / 2;
+    // No rotation needed - box is already oriented correctly
+    // Forward = +Z, Up = +Y, Right = +X
 
     this.mesh.position = this.position.clone();
     this.mesh.checkCollisions = true;
@@ -119,7 +119,7 @@ export class Submarine {
       this.mesh.rotation.y += rotation.yaw * this.rotationSpeed * deltaTime;
     }
     if (rotation.pitch !== 0) {
-      // Limit pitch to prevent flipping
+      // Limit pitch to prevent flipping (±60 degrees)
       const newPitch = this.mesh.rotation.x + rotation.pitch * this.rotationSpeed * deltaTime;
       this.mesh.rotation.x = BABYLON.Scalar.Clamp(newPitch, -Math.PI / 3, Math.PI / 3);
     }

@@ -11,14 +11,14 @@ export class MovementSystem {
     const submarine = entities.submarine;
     if (!submarine) return;
 
-    // Get movement input
+    // Get movement input (check both key names and codes for reliability)
     const direction = {
-      forward: this.input.isKeyPressed('w'),
-      backward: this.input.isKeyPressed('s'),
-      left: this.input.isKeyPressed('a'),
-      right: this.input.isKeyPressed('d'),
-      up: this.input.isKeyPressed(' '), // Spacebar
-      down: this.input.isKeyPressed('shift'),
+      forward: this.input.isKeyPressed('w') || this.input.isKeyPressed('keyw'),
+      backward: this.input.isKeyPressed('s') || this.input.isKeyPressed('keys'),
+      left: this.input.isKeyPressed('a') || this.input.isKeyPressed('keya'),
+      right: this.input.isKeyPressed('d') || this.input.isKeyPressed('keyd'),
+      up: this.input.isKeyPressed(' ') || this.input.isKeyPressed('space'),
+      down: this.input.isKeyPressed('shift') || this.input.isKeyPressed('shiftleft') || this.input.isKeyPressed('shiftright'),
     };
 
     // Apply movement
