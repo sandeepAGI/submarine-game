@@ -19,7 +19,17 @@ export class Sample {
   }
 
   create() {
-    // Try to load 3D model, fall back to improved primitive shape
+    // Create fallback mesh immediately (synchronous)
+    this.mesh = this.createFallbackMesh();
+    this.mesh.position = this.position.clone();
+
+    // Create floating label
+    this.createLabel();
+
+    // Add subtle floating animation
+    this.addFloatingAnimation();
+
+    // Try to load 3D model in background (will replace fallback if found)
     this.loadModel();
   }
 
@@ -34,29 +44,27 @@ export class Sample {
       );
 
       if (result.meshes && result.meshes.length > 0) {
-        // Model loaded successfully
+        // Model loaded successfully - replace fallback
+        const oldMesh = this.mesh;
         this.mesh = result.meshes[0];
-        this.mesh.position = this.position.clone();
-        const scale = (this.data.size || 1) * 2; // Scale to gameplay size (2-4x realistic)
+        this.mesh.position = oldMesh.position.clone();
+        const scale = (this.data.size || 1) * 2;
         this.mesh.scaling = new BABYLON.Vector3(scale, scale, scale);
+
+        // Re-link label to new mesh
+        if (this.label) {
+          this.label.linkWithMesh(this.mesh);
+        }
+
+        // Dispose old fallback mesh
+        oldMesh.dispose();
+
         console.log(`${this.data.name} 3D model loaded successfully`);
-      } else {
-        throw new Error('No meshes in model');
       }
     } catch (error) {
-      // Fallback to improved primitive shape
+      // Keep using fallback mesh
       console.log(`${this.data.name} 3D model not found, using fallback shape`);
-      this.mesh = this.createFallbackMesh();
     }
-
-    // Common setup
-    this.mesh.position = this.position.clone();
-
-    // Create floating label
-    this.createLabel();
-
-    // Add subtle floating animation
-    this.addFloatingAnimation();
   }
 
   createLabel() {

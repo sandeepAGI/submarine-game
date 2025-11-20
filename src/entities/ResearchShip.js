@@ -14,7 +14,14 @@ export class ResearchShip {
   }
 
   create() {
-    // Try to load 3D model, fall back to improved primitive shape
+    // Create fallback mesh immediately (synchronous)
+    this.mesh = this.createFallbackMesh();
+
+    // Add ship light and animation
+    this.addShipLight();
+    this.addBobbingAnimation();
+
+    // Try to load 3D model in background (will replace fallback if found)
     this.loadModel();
   }
 
@@ -29,23 +36,21 @@ export class ResearchShip {
       );
 
       if (result.meshes && result.meshes.length > 0) {
-        // Model loaded successfully
+        // Model loaded successfully - replace fallback
+        const oldMesh = this.mesh;
         this.mesh = result.meshes[0];
         this.mesh.position = new BABYLON.Vector3(0, 0, 0);
         this.mesh.scaling = new BABYLON.Vector3(2, 2, 2);
+
+        // Dispose old fallback mesh
+        oldMesh.dispose();
+
         console.log('Research Ship 3D model loaded successfully');
-      } else {
-        throw new Error('No meshes in model');
       }
     } catch (error) {
-      // Fallback to improved primitive shape
+      // Keep using fallback mesh
       console.log('Research Ship 3D model not found, using fallback shape');
-      this.mesh = this.createFallbackMesh();
     }
-
-    // Add ship light and animation
-    this.addShipLight();
-    this.addBobbingAnimation();
   }
 
   createFallbackMesh() {

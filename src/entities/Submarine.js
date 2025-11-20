@@ -29,37 +29,10 @@ export class Submarine {
   }
 
   create() {
-    // Try to load 3D model, fall back to improved primitive shape
-    this.loadModel();
-    return this;
-  }
+    // Create fallback mesh immediately (synchronous)
+    this.mesh = this.createFallbackMesh();
 
-  async loadModel() {
-    try {
-      // Attempt to load GLB model
-      const result = await BABYLON.SceneLoader.ImportMeshAsync(
-        '',
-        'src/assets/models/',
-        'submarine.glb',
-        this.scene
-      );
-
-      if (result.meshes && result.meshes.length > 0) {
-        // Model loaded successfully
-        this.mesh = result.meshes[0];
-        this.mesh.position = this.position.clone();
-        this.mesh.scaling = new BABYLON.Vector3(2, 2, 2); // Scale to appropriate size
-        console.log('Submarine 3D model loaded successfully');
-      } else {
-        throw new Error('No meshes in model');
-      }
-    } catch (error) {
-      // Fallback to improved primitive shape
-      console.log('Submarine 3D model not found, using fallback primitive shape');
-      this.mesh = this.createFallbackMesh();
-    }
-
-    // Common setup for both model and fallback
+    // Common setup
     this.mesh.checkCollisions = true;
     this.mesh.ellipsoid = new BABYLON.Vector3(1, 1, 2);
 
@@ -79,6 +52,50 @@ export class Submarine {
 
     // Set camera target to submarine (third-person)
     this.updateCameraTarget();
+
+    // Try to load 3D model in background (will replace fallback if found)
+    this.loadModel();
+
+    return this;
+  }
+
+  async loadModel() {
+    try {
+      // Attempt to load GLB model
+      const result = await BABYLON.SceneLoader.ImportMeshAsync(
+        '',
+        'src/assets/models/',
+        'submarine.glb',
+        this.scene
+      );
+
+      if (result.meshes && result.meshes.length > 0) {
+        // Model loaded successfully - replace fallback
+        const oldMesh = this.mesh;
+        this.mesh = result.meshes[0];
+        this.mesh.position = oldMesh.position.clone();
+        this.mesh.rotation = oldMesh.rotation.clone();
+        this.mesh.scaling = new BABYLON.Vector3(2, 2, 2);
+
+        // Transfer properties
+        this.mesh.checkCollisions = true;
+        this.mesh.ellipsoid = new BABYLON.Vector3(1, 1, 2);
+
+        // Re-parent light
+        this.light.parent = this.mesh;
+
+        // Update camera target
+        this.updateCameraTarget();
+
+        // Dispose old fallback mesh
+        oldMesh.dispose();
+
+        console.log('Submarine 3D model loaded successfully');
+      }
+    } catch (error) {
+      // Keep using fallback mesh
+      console.log('Submarine 3D model not found, using fallback primitive shape');
+    }
   }
 
   createFallbackMesh() {
