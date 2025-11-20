@@ -1,4 +1,5 @@
 import * as BABYLON from '@babylonjs/core';
+import * as GUI from '@babylonjs/gui';
 import { Engine } from './core/Engine.js';
 import { Input } from './core/Input.js';
 import { Ocean } from './world/Ocean.js';
@@ -26,6 +27,7 @@ class Game {
     this.researchShip = null;
     this.hud = null;
     this.researchShipUI = null;
+    this.guiTexture = null; // For floating labels
 
     // Game state
     this.credits = 0;
@@ -50,6 +52,9 @@ class Game {
 
     // Create input system
     this.input = new Input(this.engine.scene);
+
+    // Create GUI texture for floating labels
+    this.guiTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI('UI', true, this.engine.scene);
 
     // Create ocean
     this.ocean = new Ocean(this.engine.scene);
@@ -94,6 +99,11 @@ class Game {
       update: () => this.updateHUD(),
     });
 
+    // Add label update system
+    this.engine.addSystem({
+      update: () => this.updateSampleLabels(),
+    });
+
     // Add research ship interaction system
     this.engine.addSystem({
       update: () => this.checkResearchShipInteraction(),
@@ -124,7 +134,7 @@ class Game {
     }, 500);
 
     setTimeout(() => {
-      this.hud.showMessage('CONTROLS: WASD=Move, Mouse=Look, SPACE=Up, SHIFT=Down, E=Interact/Collect', 6000);
+      this.hud.showMessage('CONTROLS: WASD=Move, Mouse Drag=Camera, SPACE=Up, SHIFT=Down, E=Interact/Collect', 6000);
     }, 2000);
 
     setTimeout(() => {
@@ -152,7 +162,7 @@ class Game {
       const y = minDepth + Math.random() * (maxDepth - minDepth);
 
       const position = new BABYLON.Vector3(x, y, z);
-      const sample = new Sample(this.engine.scene, sampleData, position);
+      const sample = new Sample(this.engine.scene, sampleData, position, this.guiTexture);
 
       this.engine.addEntity('sample', sample);
     }
@@ -170,6 +180,18 @@ class Game {
     };
 
     this.hud.update(gameState);
+  }
+
+  updateSampleLabels() {
+    // Update label visibility for all samples based on submarine position
+    const submarinePos = this.submarine.position;
+    const samples = this.engine.entities.samples;
+
+    for (const sample of samples) {
+      if (sample && !sample.collected) {
+        sample.updateLabelVisibility(submarinePos, 8); // Show labels within 8 units
+      }
+    }
   }
 
   checkResearchShipInteraction() {

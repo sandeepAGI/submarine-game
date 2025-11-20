@@ -1,4 +1,5 @@
 import * as BABYLON from '@babylonjs/core';
+import '@babylonjs/loaders/glTF'; // Required for GLB loading
 
 /**
  * Research Ship entity - the hub where players interact with quests and upgrades
@@ -13,7 +14,42 @@ export class ResearchShip {
   }
 
   create() {
-    // Create ship mesh - a large visible platform
+    // Try to load 3D model, fall back to improved primitive shape
+    this.loadModel();
+  }
+
+  async loadModel() {
+    try {
+      // Attempt to load GLB model
+      const result = await BABYLON.SceneLoader.ImportMeshAsync(
+        '',
+        'src/assets/models/',
+        'research_ship.glb',
+        this.scene
+      );
+
+      if (result.meshes && result.meshes.length > 0) {
+        // Model loaded successfully
+        this.mesh = result.meshes[0];
+        this.mesh.position = new BABYLON.Vector3(0, 0, 0);
+        this.mesh.scaling = new BABYLON.Vector3(2, 2, 2);
+        console.log('Research Ship 3D model loaded successfully');
+      } else {
+        throw new Error('No meshes in model');
+      }
+    } catch (error) {
+      // Fallback to improved primitive shape
+      console.log('Research Ship 3D model not found, using fallback shape');
+      this.mesh = this.createFallbackMesh();
+    }
+
+    // Add ship light and animation
+    this.addShipLight();
+    this.addBobbingAnimation();
+  }
+
+  createFallbackMesh() {
+    // Create improved ship mesh - more detailed than before
     const shipBase = BABYLON.MeshBuilder.CreateBox(
       'researchShipBase',
       {
@@ -64,6 +100,19 @@ export class ResearchShip {
     beaconMat.emissiveColor = new BABYLON.Color3(1, 1, 0); // Full glow
     beacon.material = beaconMat;
 
+    // Parent all parts to base
+    cabin.parent = shipBase;
+    beacon.parent = shipBase;
+
+    // Make ship non-collidable (player can pass through to interact)
+    shipBase.checkCollisions = false;
+    cabin.checkCollisions = false;
+    beacon.checkCollisions = false;
+
+    return shipBase;
+  }
+
+  addShipLight() {
     // Add a bright light to the ship for visibility
     const shipLight = new BABYLON.PointLight(
       'shipLight',
@@ -71,26 +120,9 @@ export class ResearchShip {
       this.scene
     );
     shipLight.diffuse = new BABYLON.Color3(1, 0.8, 0.4);
-    shipLight.intensity = 2;
-    shipLight.range = 50;
-
-    // Parent all parts to base
-    cabin.parent = shipBase;
-    beacon.parent = shipBase;
-    shipLight.parent = shipBase;
-
-    // Make ship non-collidable (player can pass through to interact)
-    shipBase.checkCollisions = false;
-    cabin.checkCollisions = false;
-    beacon.checkCollisions = false;
-
-    this.mesh = shipBase;
-    this.position = shipBase.position;
-
-    // Add gentle bobbing animation
-    this.addBobbingAnimation();
-
-    return this;
+    shipLight.intensity = 2.5; // Brighter for better visibility
+    shipLight.range = 60; // Longer range
+    shipLight.parent = this.mesh;
   }
 
   addBobbingAnimation() {

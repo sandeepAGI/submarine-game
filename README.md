@@ -2,7 +2,9 @@
 
 ## Project Overview
 
-A first-person web-based submarine exploration and collection game where players dive into the ocean depths to collect biological samples for research, complete quests, and upgrade their submarine to reach deeper, more dangerous waters.
+A third-person web-based submarine exploration and collection game where players dive into the ocean depths to collect biological samples for research, complete quests, and upgrade their submarine to reach deeper, more dangerous waters.
+
+**Note**: Originally designed as first-person, changed to third-person after initial UAT for better spatial awareness and visual feedback.
 
 ## Core Gameplay Loop
 
@@ -21,7 +23,10 @@ A first-person web-based submarine exploration and collection game where players
 ### 1. Core Mechanics
 
 #### 1.1 Player & Submarine
-- **Perspective**: First-person view from inside submarine
+- **Perspective**: Third-person view (camera behind/above submarine)
+  - Provides spatial awareness and submarine visibility
+  - Can see equipped tools and submarine model
+  - Better for underwater navigation
 - **Controls**: WASD movement + mouse look (simplified, not full 6-DOF)
 - **Movement Style**: Arcade-style (not physics-based simulation)
 - **Health System**: Armor points that deplete from attacks/hazards
@@ -29,6 +34,11 @@ A first-person web-based submarine exploration and collection game where players
   - **Emergency Oxygen**: When oxygen reaches 0%, player has 10-15 seconds of warning (alarms, visual effects) before death
   - Allows last-chance surface attempts, more forgiving than instant death
 - **Death Condition**: If armor reaches zero OR emergency oxygen runs out, player dies and respawns
+- **Visual Quality**:
+  - 3D models for submarine, samples, and research ship
+  - Distinct, identifiable sample types with appropriate sizes
+  - Emissive materials and lighting for underwater visibility
+  - Floating labels for sample identification
 
 #### 1.2 Sample Collection
 - **Collection Method**: Equippable tools/nets or shooting mechanisms
@@ -250,11 +260,22 @@ A first-person web-based submarine exploration and collection game where players
 - **Target**: Modern browsers (Chrome, Firefox, Safari, Edge)
 - **Performance**: 60 FPS target on mid-range hardware
 
-#### 8.2 Art Style
+#### 8.2 Art Style & Assets
 - **Visual Style**: Stylized (not photorealistic)
-- **Graphics**: 3D low-poly or stylized models
-- **Color Palette**: Vibrant, distinct zones
-- **Animation**: Smooth character/creature animations
+- **Graphics**: 3D models (GLB/GLTF format)
+  - Submarine: Custom or sourced 3D model
+  - Samples: Distinct models for each type (kelp, shell, coral, fish, starfish)
+  - Research Ship: Ship-like 3D model with details
+  - Models sourced from free libraries or created as needed
+- **Asset Pipeline**:
+  - GLB format for optimized web delivery
+  - Babylon.js SceneLoader for model import
+  - Fallback to procedural meshes if models unavailable
+- **Color Palette**: Vibrant, distinct colors for each sample type
+  - Emissive materials for underwater visibility
+  - High contrast against ocean environment
+- **Scale**: Samples sized 3-5x larger than realistic for gameplay visibility
+- **Animation**: Smooth movements, floating/bobbing effects, swimming animations
 
 #### 8.3 Audio
 - **Music**: Ambient underwater soundscapes per zone

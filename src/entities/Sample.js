@@ -1,86 +1,264 @@
 import * as BABYLON from '@babylonjs/core';
+import * as GUI from '@babylonjs/gui';
+import '@babylonjs/loaders/glTF'; // Required for GLB loading
 
 /**
  * Sample entity - collectible specimens
  */
 export class Sample {
-  constructor(scene, sampleData, position) {
+  constructor(scene, sampleData, position, guiTexture) {
     this.scene = scene;
     this.data = sampleData;
     this.position = position;
     this.mesh = null;
+    this.label = null;
+    this.guiTexture = guiTexture; // Shared GUI texture for all labels
     this.collected = false;
 
     this.create();
   }
 
   create() {
-    // Create sample mesh based on type
-    const size = this.data.size || 1;
+    // Try to load 3D model, fall back to improved primitive shape
+    this.loadModel();
+  }
 
-    // Different shapes for different sample types
+  async loadModel() {
+    try {
+      // Attempt to load GLB model for this sample type
+      const result = await BABYLON.SceneLoader.ImportMeshAsync(
+        '',
+        'src/assets/models/samples/',
+        `${this.data.id}.glb`,
+        this.scene
+      );
+
+      if (result.meshes && result.meshes.length > 0) {
+        // Model loaded successfully
+        this.mesh = result.meshes[0];
+        this.mesh.position = this.position.clone();
+        const scale = (this.data.size || 1) * 2; // Scale to gameplay size (2-4x realistic)
+        this.mesh.scaling = new BABYLON.Vector3(scale, scale, scale);
+        console.log(`${this.data.name} 3D model loaded successfully`);
+      } else {
+        throw new Error('No meshes in model');
+      }
+    } catch (error) {
+      // Fallback to improved primitive shape
+      console.log(`${this.data.name} 3D model not found, using fallback shape`);
+      this.mesh = this.createFallbackMesh();
+    }
+
+    // Common setup
+    this.mesh.position = this.position.clone();
+
+    // Create floating label
+    this.createLabel();
+
+    // Add subtle floating animation
+    this.addFloatingAnimation();
+  }
+
+  createLabel() {
+    if (!this.guiTexture) return;
+
+    // Create label container
+    this.label = new GUI.Rectangle(`label_${this.data.id}`);
+    this.label.width = '150px';
+    this.label.height = '50px';
+    this.label.cornerRadius = 8;
+    this.label.color = 'white';
+    this.label.thickness = 2;
+    this.label.background = 'rgba(0, 0, 0, 0.7)';
+    this.label.alpha = 0.9;
+
+    // Sample name text
+    const nameText = new GUI.TextBlock();
+    nameText.text = this.data.name;
+    nameText.color = this.data.color || 'white';
+    nameText.fontSize = 16;
+    nameText.fontWeight = 'bold';
+    this.label.addControl(nameText);
+
+    // Type indicator (smaller text)
+    const typeText = new GUI.TextBlock();
+    typeText.text = this.data.type || '';
+    typeText.color = 'lightgray';
+    typeText.fontSize = 11;
+    typeText.top = '18px';
+    this.label.addControl(typeText);
+
+    // Add to GUI texture
+    this.guiTexture.addControl(this.label);
+
+    // Link label to mesh (will follow mesh position)
+    this.label.linkWithMesh(this.mesh);
+    this.label.linkOffsetY = -60; // Position above mesh
+
+    // Initially hide label (will show when player gets close)
+    this.label.isVisible = false;
+  }
+
+  updateLabelVisibility(playerPosition, maxDistance = 8) {
+    if (!this.label || this.collected) return;
+
+    const distance = BABYLON.Vector3.Distance(playerPosition, this.position);
+
+    if (distance < maxDistance) {
+      // Fade in based on distance
+      const alpha = 1 - (distance / maxDistance);
+      this.label.alpha = alpha * 0.9; // Max 0.9 opacity
+      this.label.isVisible = true;
+    } else {
+      this.label.isVisible = false;
+    }
+  }
+
+  createFallbackMesh() {
+    // Create improved sample mesh based on type
+    // Sizes are 3-5x larger than realistic for gameplay visibility
+    const size = (this.data.size || 1) * 3;
+
+    // Different shapes for different sample types - more distinctive
     let shape;
     switch (this.data.id) {
       case 'kelp':
+        // Tall waving plant
         shape = BABYLON.MeshBuilder.CreateCylinder(
           `sample_${this.data.id}`,
-          { height: size * 2, diameter: size * 0.3 },
+          { height: size * 3, diameter: size * 0.4, tessellation: 12 },
           this.scene
         );
         break;
       case 'shell':
-        shape = BABYLON.MeshBuilder.CreateSphere(
-          `sample_${this.data.id}`,
-          { diameter: size, segments: 8 },
+        // Spiraled shell shape (torus + sphere)
+        const shellParent = new BABYLON.TransformNode(`sample_${this.data.id}`, this.scene);
+        const shellBody = BABYLON.MeshBuilder.CreateSphere(
+          'shellBody',
+          { diameter: size * 1.2, segments: 12 },
           this.scene
         );
+        shellBody.scaling.y = 0.7; // Flatten slightly
+        shellBody.parent = shellParent;
+
+        const shellSpiral = BABYLON.MeshBuilder.CreateTorus(
+          'shellSpiral',
+          { diameter: size * 0.8, thickness: size * 0.15, tessellation: 16 },
+          this.scene
+        );
+        shellSpiral.position.y = size * 0.3;
+        shellSpiral.rotation.x = Math.PI / 4;
+        shellSpiral.parent = shellParent;
+
+        shape = shellParent;
         break;
       case 'coral':
-        shape = BABYLON.MeshBuilder.CreateBox(
-          `sample_${this.data.id}`,
-          { size: size },
+        // Branching coral structure
+        const coralParent = new BABYLON.TransformNode(`sample_${this.data.id}`, this.scene);
+
+        // Main trunk
+        const trunk = BABYLON.MeshBuilder.CreateCylinder(
+          'coralTrunk',
+          { height: size * 1.5, diameter: size * 0.4, tessellation: 8 },
           this.scene
         );
+        trunk.parent = coralParent;
+
+        // Branches
+        for (let i = 0; i < 4; i++) {
+          const branch = BABYLON.MeshBuilder.CreateCylinder(
+            `coralBranch${i}`,
+            { height: size * 0.8, diameter: size * 0.2, tessellation: 6 },
+            this.scene
+          );
+          branch.position.y = size * (0.2 + i * 0.3);
+          branch.rotation.z = Math.PI / 3;
+          branch.rotation.y = (Math.PI / 2) * i;
+          branch.parent = coralParent;
+        }
+
+        shape = coralParent;
         break;
       case 'smallfish':
-        shape = BABYLON.MeshBuilder.CreateCapsule(
-          `sample_${this.data.id}`,
-          { radius: size * 0.2, height: size * 0.8 },
+        // Fish-like body with tail
+        const fishParent = new BABYLON.TransformNode(`sample_${this.data.id}`, this.scene);
+
+        const body = BABYLON.MeshBuilder.CreateSphere(
+          'fishBody',
+          { diameter: size, segments: 12 },
           this.scene
         );
+        body.scaling.x = 0.6;
+        body.scaling.z = 1.4;
+        body.parent = fishParent;
+
+        const tail = BABYLON.MeshBuilder.CreateCylinder(
+          'fishTail',
+          { height: size * 0.6, diameterTop: 0, diameterBottom: size * 0.5, tessellation: 3 },
+          this.scene
+        );
+        tail.rotation.x = Math.PI / 2;
+        tail.position.z = -size * 0.8;
+        tail.parent = fishParent;
+
+        fishParent.rotation.y = Math.PI / 2; // Face forward
+        shape = fishParent;
         break;
       case 'starfish':
-        shape = BABYLON.MeshBuilder.CreateTorus(
-          `sample_${this.data.id}`,
-          { diameter: size, thickness: size * 0.2, tessellation: 5 },
+        // Five-armed starfish
+        const starParent = new BABYLON.TransformNode(`sample_${this.data.id}`, this.scene);
+
+        // Center body
+        const center = BABYLON.MeshBuilder.CreateCylinder(
+          'starCenter',
+          { height: size * 0.3, diameter: size * 0.8, tessellation: 16 },
           this.scene
         );
+        center.parent = starParent;
+
+        // Five arms
+        for (let i = 0; i < 5; i++) {
+          const arm = BABYLON.MeshBuilder.CreateCylinder(
+            `starArm${i}`,
+            { height: size, diameterTop: size * 0.2, diameterBottom: size * 0.4, tessellation: 8 },
+            this.scene
+          );
+          arm.rotation.x = Math.PI / 2;
+          arm.position.x = Math.cos((i / 5) * Math.PI * 2) * size * 0.5;
+          arm.position.z = Math.sin((i / 5) * Math.PI * 2) * size * 0.5;
+          arm.rotation.y = (i / 5) * Math.PI * 2;
+          arm.parent = starParent;
+        }
+
+        shape = starParent;
         break;
       default:
         shape = BABYLON.MeshBuilder.CreateSphere(
           `sample_${this.data.id}`,
-          { diameter: size },
+          { diameter: size, segments: 12 },
           this.scene
         );
     }
 
-    this.mesh = shape;
-    this.mesh.position = this.position.clone();
-
-    // Create material with sample color
+    // Create material with sample color and strong emissive glow
     const mat = new BABYLON.StandardMaterial(`sampleMat_${this.data.id}`, this.scene);
 
     // Parse color string (hex format)
     const color = this.parseColor(this.data.color);
     mat.diffuseColor = color;
-    mat.emissiveColor = color.scale(0.2); // Slight glow
+    mat.emissiveColor = color.scale(0.4); // Stronger glow for visibility
+    mat.specularColor = new BABYLON.Color3(0.3, 0.3, 0.3);
 
-    this.mesh.material = mat;
+    // Apply material to all meshes in shape
+    if (shape.getChildMeshes) {
+      shape.getChildMeshes().forEach(mesh => {
+        mesh.material = mat;
+      });
+    } else {
+      shape.material = mat;
+    }
 
-    // Add subtle floating animation
-    this.addFloatingAnimation();
-
-    return this;
+    return shape;
   }
 
   parseColor(hexColor) {
@@ -113,6 +291,10 @@ export class Sample {
 
   collect() {
     this.collected = true;
+    if (this.label) {
+      this.label.dispose();
+      this.label = null;
+    }
     if (this.mesh) {
       this.mesh.dispose();
       this.mesh = null;
@@ -120,6 +302,10 @@ export class Sample {
   }
 
   dispose() {
+    if (this.label) {
+      this.label.dispose();
+      this.label = null;
+    }
     if (this.mesh) {
       this.mesh.dispose();
       this.mesh = null;

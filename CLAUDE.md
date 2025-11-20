@@ -119,6 +119,123 @@ npm install -D typescript @types/node
 
 ## Architecture Overview
 
+### Camera & Player Perspective
+
+**Third-Person Camera** (Changed from first-person after initial UAT)
+
+The game uses a **third-person follow camera** for better spatial awareness and visual feedback:
+
+```javascript
+// Camera setup in Engine.js or Submarine.js
+const camera = new BABYLON.ArcRotateCamera(
+  'camera',
+  Math.PI / 2,  // Alpha (horizontal rotation)
+  Math.PI / 3,  // Beta (vertical angle)
+  10,           // Radius (distance from target)
+  BABYLON.Vector3.Zero(),
+  scene
+);
+
+camera.lowerRadiusLimit = 5;   // Min zoom distance
+camera.upperRadiusLimit = 20;  // Max zoom distance
+camera.lowerBetaLimit = 0.1;   // Prevent camera going below ground
+camera.upperBetaLimit = Math.PI / 2;
+
+// Attach camera to submarine mesh
+camera.setTarget(submarine.mesh);
+```
+
+**Rationale for Third-Person:**
+- Better spatial awareness of surroundings
+- Submarine model is visible (provides orientation feedback)
+- Easier to see nearby samples and obstacles
+- More engaging for collection gameplay
+- Industry standard for vehicle-based games
+
+### 3D Asset Pipeline
+
+**Model Format:** GLB (optimized GLTF)
+- Single-file format with embedded textures
+- Optimized for web delivery
+- Supported natively by Babylon.js SceneLoader
+
+**Loading 3D Models:**
+
+```javascript
+import * as BABYLON from '@babylonjs/core';
+import '@babylonjs/loaders/glTF'; // Required for GLB loading
+
+// Example: Load submarine model
+BABYLON.SceneLoader.ImportMesh(
+  '',  // Import all meshes
+  'assets/models/',  // Path
+  'submarine.glb',   // Filename
+  scene,
+  (meshes) => {
+    this.mesh = meshes[0];
+    this.mesh.position = startPosition;
+    this.mesh.scaling = new BABYLON.Vector3(1, 1, 1);
+  }
+);
+
+// Example: Load sample model with callback
+async loadSampleModel(sampleType) {
+  const result = await BABYLON.SceneLoader.ImportMeshAsync(
+    '',
+    'assets/models/samples/',
+    `${sampleType}.glb`,
+    this.scene
+  );
+  return result.meshes[0];
+}
+```
+
+**Asset Sources:**
+- Custom 3D modeling (Blender, Maya, etc.)
+- Free asset libraries (Sketchfab, Poly Haven, Quaternius)
+- Procedurally generated (for simple shapes)
+
+**Scale Guidelines:**
+- Submarine: ~2-4 units (width/height)
+- Samples: 1-3 units (3-5x larger than realistic for gameplay visibility)
+- Research Ship: 8-12 units (large, visible landmark)
+
+### Visual Identification System
+
+**Babylon.js GUI Floating Labels:**
+
+```javascript
+import * as GUI from '@babylonjs/gui';
+
+// Create fullscreen GUI
+const advancedTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI('UI');
+
+// Add label to sample
+const label = new GUI.Rectangle('sampleLabel');
+label.width = '150px';
+label.height = '40px';
+label.cornerRadius = 5;
+label.color = 'white';
+label.thickness = 2;
+label.background = 'rgba(0, 0, 0, 0.7)';
+
+const text = new GUI.TextBlock();
+text.text = sample.name;
+text.color = 'white';
+text.fontSize = 14;
+label.addControl(text);
+
+advancedTexture.addControl(label);
+label.linkWithMesh(sample.mesh);
+label.linkOffsetY = -50; // Position above mesh
+```
+
+**Label Visibility:**
+- Show labels when within collection range (~5 units)
+- Fade in/out based on distance
+- Color-coded by sample type/rarity
+- Hide labels when inventory full or tool not equipped
+
 ### Design Pattern: Entity-Component-System (Inspired)
 
 While not a pure ECS, we use a similar pattern:
@@ -295,6 +412,42 @@ class EconomySystem {
 
 ## Testing Strategy
 
+### CRITICAL: Testing Requirements
+
+**⚠️ MANDATORY SMOKE TEST BEFORE UAT ⚠️**
+
+After initial UAT failure (see docs/GAP_ANALYSIS.md), the following testing protocol is now **MANDATORY**:
+
+1. **Run the game in a browser** - Always execute `npm run dev` and open `localhost:5173` in browser
+2. **Play for 5 minutes minimum** - Actually interact with the game as a user would
+3. **Document with evidence** - Screenshots or short video clips showing:
+   - Game loading successfully
+   - Core controls working (WASD, mouse look, SPACE/SHIFT)
+   - Visual elements rendering correctly (submarine, samples, research ship)
+   - UI displaying properly (HUD, messages, inventory)
+   - Key gameplay loop functional (collect, quest, upgrade)
+
+**NEVER claim "testing complete" without browser execution evidence.**
+
+### Smoke Test Checklist (5-10 minutes)
+
+**MANDATORY** before any UAT or "ready for review" claim:
+
+- [ ] **Load Test**: Game loads without 404 or console errors
+- [ ] **Visibility Test**: Can see submarine, research ship, samples
+- [ ] **Control Test**: WASD moves submarine, mouse rotates camera
+- [ ] **Depth Test**: SPACE/SHIFT changes depth as expected
+- [ ] **Tutorial Test**: Tutorial messages appear and are readable
+- [ ] **Collection Test**: Can collect at least one sample with E key
+- [ ] **Interaction Test**: Can open research ship UI with E key
+- [ ] **HUD Test**: Oxygen, depth, inventory display correctly
+- [ ] **Performance Test**: Runs at acceptable FPS (check with F12 → Performance)
+
+**Evidence Required:**
+- Screenshot of game running with visible submarine
+- Screenshot of HUD showing stats
+- Short clip of movement (GIF or video)
+
 ### Unit Tests
 
 Test individual systems in isolation:
@@ -340,6 +493,20 @@ For each phase, test:
 
 Test full gameplay loops:
 - Dive → Collect → Surface → Complete Quest → Buy Upgrade
+
+### Lessons Learned: Testing Failures
+
+**Root Cause of Phase 1 UAT Failure:**
+- Test plan was created but **never executed**
+- Game was never actually run in a browser
+- All bugs (inverted controls, invisible ship, poor tutorial) were trivially discoverable in <5 minutes
+- Confused "writing a test plan" with "actually testing"
+
+**New Protocol:**
+- Test plan creation ≠ Testing complete
+- "Browser execution" is now mandatory checkpoint
+- Evidence (screenshots/video) required for all test claims
+- Smoke test must pass before any UAT request
 
 ---
 
@@ -531,6 +698,15 @@ Before committing, verify:
 
 ## Changelog
 
+### 2025-11-20
+- **MAJOR UPDATE**: Changed camera perspective from first-person to third-person
+- Added 3D asset pipeline documentation (GLB format, SceneLoader)
+- Added Babylon.js GUI floating label system for sample identification
+- **CRITICAL**: Added mandatory smoke test requirements after UAT failure
+- Documented testing lessons learned (see docs/GAP_ANALYSIS.md)
+- Added evidence requirements for all testing claims
+- Updated architecture overview with camera setup code examples
+
 ### 2025-11-16
 - Initial CLAUDE.md created
 - Defined project structure, tech stack, architecture
@@ -538,6 +714,6 @@ Before committing, verify:
 
 ---
 
-**Document Version**: 1.0
-**Last Updated**: 2025-11-16
+**Document Version**: 2.0
+**Last Updated**: 2025-11-20
 **Maintained By**: Development Team + AI Assistants

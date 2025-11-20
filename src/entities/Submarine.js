@@ -1,4 +1,5 @@
 import * as BABYLON from '@babylonjs/core';
+import '@babylonjs/loaders/glTF'; // Required for GLB loading
 import { GAME_CONFIG, INITIAL_STATE } from '../data/config.js';
 
 /**
@@ -28,31 +29,41 @@ export class Submarine {
   }
 
   create() {
-    // Create submarine mesh (box shape - naturally horizontal)
-    this.mesh = BABYLON.MeshBuilder.CreateBox(
-      'submarine',
-      {
-        width: 2,    // X axis (left-right)
-        height: 1.5, // Y axis (up-down)
-        depth: 4,    // Z axis (forward-backward)
-      },
-      this.scene
-    );
+    // Try to load 3D model, fall back to improved primitive shape
+    this.loadModel();
+    return this;
+  }
 
-    // No rotation needed - box is already oriented correctly
-    // Forward = +Z, Up = +Y, Right = +X
+  async loadModel() {
+    try {
+      // Attempt to load GLB model
+      const result = await BABYLON.SceneLoader.ImportMeshAsync(
+        '',
+        'src/assets/models/',
+        'submarine.glb',
+        this.scene
+      );
 
-    this.mesh.position = this.position.clone();
+      if (result.meshes && result.meshes.length > 0) {
+        // Model loaded successfully
+        this.mesh = result.meshes[0];
+        this.mesh.position = this.position.clone();
+        this.mesh.scaling = new BABYLON.Vector3(2, 2, 2); // Scale to appropriate size
+        console.log('Submarine 3D model loaded successfully');
+      } else {
+        throw new Error('No meshes in model');
+      }
+    } catch (error) {
+      // Fallback to improved primitive shape
+      console.log('Submarine 3D model not found, using fallback primitive shape');
+      this.mesh = this.createFallbackMesh();
+    }
+
+    // Common setup for both model and fallback
     this.mesh.checkCollisions = true;
     this.mesh.ellipsoid = new BABYLON.Vector3(1, 1, 2);
 
-    // Create submarine material
-    const subMat = new BABYLON.StandardMaterial('submarineMat', this.scene);
-    subMat.diffuseColor = new BABYLON.Color3(0.8, 0.8, 0.2); // Yellow submarine
-    subMat.specularColor = new BABYLON.Color3(0.5, 0.5, 0.5);
-    this.mesh.material = subMat;
-
-    // Add a light to the submarine (headlights)
+    // Add headlight to submarine
     this.light = new BABYLON.SpotLight(
       'submarineLight',
       this.mesh.position.clone(),
@@ -62,21 +73,107 @@ export class Submarine {
       this.scene
     );
     this.light.diffuse = new BABYLON.Color3(1, 1, 0.8);
-    this.light.intensity = 0.8;
-    this.light.range = 30;
+    this.light.intensity = 1.2;
+    this.light.range = 35;
     this.light.parent = this.mesh;
 
-    // Attach camera to submarine
-    this.attachCamera();
-
-    return this;
+    // Set camera target to submarine (third-person)
+    this.updateCameraTarget();
   }
 
-  attachCamera() {
-    // Position camera inside submarine
-    this.camera.parent = this.mesh;
-    this.camera.position = new BABYLON.Vector3(0, 0.5, 0);
-    this.camera.rotation = new BABYLON.Vector3(0, 0, 0);
+  createFallbackMesh() {
+    // Create improved submarine shape using cylinders and spheres
+    const parent = new BABYLON.TransformNode('submarine', this.scene);
+    parent.position = this.position.clone();
+
+    // Main hull (horizontal cylinder)
+    const hull = BABYLON.MeshBuilder.CreateCylinder(
+      'submarineHull',
+      {
+        height: 4,      // Length of submarine
+        diameter: 1.5,  // Width
+        tessellation: 16,
+      },
+      this.scene
+    );
+    hull.rotation.x = Math.PI / 2; // Rotate to horizontal
+    hull.parent = parent;
+
+    // Front nose cone
+    const nose = BABYLON.MeshBuilder.CreateSphere(
+      'submarineNose',
+      {
+        diameter: 1.5,
+        segments: 12,
+      },
+      this.scene
+    );
+    nose.position.z = 2; // Position at front
+    nose.scaling.z = 0.8; // Elongate forward
+    nose.parent = parent;
+
+    // Conning tower (periscope housing)
+    const tower = BABYLON.MeshBuilder.CreateCylinder(
+      'submarineTower',
+      {
+        height: 1,
+        diameter: 0.6,
+        tessellation: 12,
+      },
+      this.scene
+    );
+    tower.position.y = 0.8;
+    tower.position.z = -0.5;
+    tower.parent = parent;
+
+    // Rear stabilizer fins
+    const finLeft = BABYLON.MeshBuilder.CreateBox(
+      'finLeft',
+      {
+        width: 0.8,
+        height: 0.1,
+        depth: 0.8,
+      },
+      this.scene
+    );
+    finLeft.position.set(-0.6, 0, -1.8);
+    finLeft.rotation.z = Math.PI / 6;
+    finLeft.parent = parent;
+
+    const finRight = BABYLON.MeshBuilder.CreateBox(
+      'finRight',
+      {
+        width: 0.8,
+        height: 0.1,
+        depth: 0.8,
+      },
+      this.scene
+    );
+    finRight.position.set(0.6, 0, -1.8);
+    finRight.rotation.z = -Math.PI / 6;
+    finRight.parent = parent;
+
+    // Material for all parts
+    const subMat = new BABYLON.StandardMaterial('submarineMat', this.scene);
+    subMat.diffuseColor = new BABYLON.Color3(0.9, 0.8, 0.1); // Bright yellow
+    subMat.specularColor = new BABYLON.Color3(0.6, 0.6, 0.6);
+    subMat.emissiveColor = new BABYLON.Color3(0.1, 0.1, 0); // Slight glow
+
+    hull.material = subMat;
+    nose.material = subMat;
+    tower.material = subMat;
+    finLeft.material = subMat;
+    finRight.material = subMat;
+
+    return parent;
+  }
+
+  updateCameraTarget() {
+    // Update camera target to follow submarine position
+    // ArcRotateCamera will automatically orbit around this target
+    if (this.camera && this.camera.setTarget) {
+      this.camera.setTarget(this.mesh.position);
+    }
   }
 
   move(direction, deltaTime) {
@@ -111,6 +208,9 @@ export class Submarine {
 
     // Update position reference
     this.position = this.mesh.position.clone();
+
+    // Update camera target to follow submarine
+    this.updateCameraTarget();
   }
 
   rotate(rotation, deltaTime) {

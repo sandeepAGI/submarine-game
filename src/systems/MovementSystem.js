@@ -1,10 +1,10 @@
 /**
  * Movement system - handles submarine movement based on input
+ * NOTE: With third-person camera, mouse controls camera orbit (handled by ArcRotateCamera)
  */
 export class MovementSystem {
   constructor(input) {
     this.input = input;
-    this.mouseSensitivity = 0.002;
   }
 
   update(deltaTime, entities) {
@@ -21,18 +21,11 @@ export class MovementSystem {
       down: this.input.isKeyPressed('shift') || this.input.isKeyPressed('shiftleft') || this.input.isKeyPressed('shiftright'),
     };
 
-    // Apply movement
+    // Apply movement - WASD moves in submarine's local axes (tank controls)
     submarine.move(direction, deltaTime);
 
-    // Get mouse movement for rotation
-    if (this.input.pointerLocked) {
-      const mouse = this.input.getMouseMovement();
-      const rotation = {
-        yaw: -mouse.x * this.mouseSensitivity,
-        pitch: -mouse.y * this.mouseSensitivity,
-      };
-
-      submarine.rotate(rotation, deltaTime);
-    }
+    // Note: Submarine rotation can be controlled by Q (turn left) if needed in future
+    // For now, submarine maintains orientation, player uses strafing (A/D) to navigate
+    // Mouse controls camera orbit around submarine (handled by ArcRotateCamera)
   }
 }
