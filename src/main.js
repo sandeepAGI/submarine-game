@@ -13,6 +13,7 @@ import { QuestSystem } from './systems/QuestSystem.js';
 import { UpgradeSystem } from './systems/UpgradeSystem.js';
 import { HUD } from './ui/HUD.js';
 import { ResearchShipUI } from './ui/ResearchShipUI.js';
+import { HelpUI } from './ui/HelpUI.js';
 import samplesData from './data/samples.json';
 
 /**
@@ -27,6 +28,7 @@ class Game {
     this.researchShip = null;
     this.hud = null;
     this.researchShipUI = null;
+    this.helpUI = null;
     this.guiTexture = null; // For floating labels
 
     // Game state
@@ -112,6 +114,7 @@ class Game {
     // Create UI
     this.hud = new HUD();
     this.researchShipUI = new ResearchShipUI(this.questSystem, this.upgradeSystem);
+    this.helpUI = new HelpUI();
 
     // Setup UI callbacks
     this.researchShipUI.setCallbacks({
@@ -134,16 +137,16 @@ class Game {
     }, 500);
 
     setTimeout(() => {
-      this.hud.showMessage('CONTROLS: WASD=Move, Mouse Drag=Camera, SPACE=Up, SHIFT=Down, E=Interact/Collect', 6000);
+      this.hud.showMessage('Press H for HELP & CONTROLS anytime!', 5000);
     }, 2000);
 
     setTimeout(() => {
       this.hud.showMessage('OBJECTIVE: Press E at the ORANGE RESEARCH SHIP to accept a quest', 6000);
-    }, 4500);
+    }, 4000);
 
     setTimeout(() => {
       this.hud.showMessage('The orange ship is right in front of you! Swim to it and press E', 6000);
-    }, 7500);
+    }, 6500);
   }
 
   spawnSamples(count) {
