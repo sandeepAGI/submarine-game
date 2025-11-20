@@ -186,10 +186,10 @@ export class Submarine {
   }
 
   updateCameraTarget() {
-    // Update camera target to follow submarine position
-    // ArcRotateCamera will automatically orbit around this target
-    if (this.camera && this.camera.setTarget) {
-      this.camera.setTarget(this.mesh.position);
+    // Lock camera to submarine mesh so it follows automatically
+    // ArcRotateCamera will orbit around the submarine
+    if (this.camera) {
+      this.camera.lockedTarget = this.mesh;
     }
   }
 
@@ -225,9 +225,6 @@ export class Submarine {
 
     // Update position reference
     this.position = this.mesh.position.clone();
-
-    // Update camera target to follow submarine
-    this.updateCameraTarget();
   }
 
   rotate(rotation, deltaTime) {
