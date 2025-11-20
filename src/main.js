@@ -255,11 +255,20 @@ class Game {
   handleOxygenDepleted() {
     this.hud.showMessage('OXYGEN DEPLETED! Respawning...', 2000);
 
-    // Respawn submarine
+    // Respawn submarine and samples
     setTimeout(() => {
       this.submarine.respawn();
+      this.respawnSamples();  // Respawn samples so ocean isn't empty
       this.hud.showMessage('Respawned at surface. Inventory lost.');
     }, 2000);
+  }
+
+  respawnSamples() {
+    // Respawn all collected samples (15 total)
+    const sampleCount = 15 - this.engine.entities.samples.length;
+    if (sampleCount > 0) {
+      this.spawnSamples(sampleCount);
+    }
   }
 }
 
