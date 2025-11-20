@@ -99,87 +99,174 @@ export class Submarine {
   }
 
   createFallbackMesh() {
-    // Create improved submarine shape using cylinders and spheres
+    // Create detailed submarine shape - larger and more visually distinct
     // Use hull as main mesh (supports collision), parent other parts to it
 
     // Main hull (horizontal cylinder) - THIS IS THE MAIN MESH
     const hull = BABYLON.MeshBuilder.CreateCylinder(
       'submarine',
       {
-        height: 4,      // Length of submarine
-        diameter: 1.5,  // Width
-        tessellation: 16,
+        height: 6,      // Length increased for better visibility
+        diameter: 2,    // Width increased
+        tessellation: 24, // More segments for smoother appearance
       },
       this.scene
     );
     hull.rotation.x = Math.PI / 2; // Rotate to horizontal
     hull.position = this.position.clone();
 
-    // Front nose cone
+    // Front nose cone (more elongated for realistic look)
     const nose = BABYLON.MeshBuilder.CreateSphere(
       'submarineNose',
       {
-        diameter: 1.5,
-        segments: 12,
+        diameter: 2,
+        segments: 16,
       },
       this.scene
     );
-    nose.position.z = 2; // Position at front
-    nose.scaling.z = 0.8; // Elongate forward
+    nose.position.z = 3; // Position at front
+    nose.scaling.set(1, 1, 1.4); // Elongate forward
     nose.parent = hull;
 
-    // Conning tower (periscope housing)
+    // Rear propeller housing
+    const propHousing = BABYLON.MeshBuilder.CreateCylinder(
+      'propHousing',
+      {
+        height: 0.8,
+        diameter: 1.2,
+        tessellation: 16,
+      },
+      this.scene
+    );
+    propHousing.rotation.x = Math.PI / 2;
+    propHousing.position.z = -3.4;
+    propHousing.parent = hull;
+
+    // Propeller (simple cross shape)
+    const propBlade1 = BABYLON.MeshBuilder.CreateBox('propBlade1', {
+      width: 1.8, height: 0.1, depth: 0.4
+    }, this.scene);
+    propBlade1.position.z = -3.8;
+    propBlade1.parent = hull;
+
+    const propBlade2 = BABYLON.MeshBuilder.CreateBox('propBlade2', {
+      width: 0.4, height: 1.8, depth: 0.1
+    }, this.scene);
+    propBlade2.position.z = -3.8;
+    propBlade2.parent = hull;
+
+    // Conning tower (larger and more detailed)
     const tower = BABYLON.MeshBuilder.CreateCylinder(
       'submarineTower',
       {
-        height: 1,
-        diameter: 0.6,
+        height: 1.5,
+        diameter: 0.9,
+        tessellation: 16,
+      },
+      this.scene
+    );
+    tower.position.y = 1.2;
+    tower.position.z = -0.5;
+    tower.parent = hull;
+
+    // Tower top (periscope housing)
+    const towerTop = BABYLON.MeshBuilder.CreateCylinder(
+      'towerTop',
+      {
+        height: 0.4,
+        diameterTop: 0.6,
+        diameterBottom: 0.9,
         tessellation: 12,
       },
       this.scene
     );
-    tower.position.y = 0.8;
-    tower.position.z = -0.5;
-    tower.parent = hull;
+    towerTop.position.y = 1.95;
+    towerTop.position.z = -0.5;
+    towerTop.parent = hull;
 
-    // Rear stabilizer fins
+    // Side fins (diving planes)
     const finLeft = BABYLON.MeshBuilder.CreateBox(
       'finLeft',
       {
-        width: 0.8,
-        height: 0.1,
-        depth: 0.8,
+        width: 1.2,
+        height: 0.15,
+        depth: 1.2,
       },
       this.scene
     );
-    finLeft.position.set(-0.6, 0, -1.8);
-    finLeft.rotation.z = Math.PI / 6;
+    finLeft.position.set(-0.8, 0, -2);
+    finLeft.rotation.z = Math.PI / 5;
     finLeft.parent = hull;
 
     const finRight = BABYLON.MeshBuilder.CreateBox(
       'finRight',
       {
-        width: 0.8,
-        height: 0.1,
-        depth: 0.8,
+        width: 1.2,
+        height: 0.15,
+        depth: 1.2,
       },
       this.scene
     );
-    finRight.position.set(0.6, 0, -1.8);
-    finRight.rotation.z = -Math.PI / 6;
+    finRight.position.set(0.8, 0, -2);
+    finRight.rotation.z = -Math.PI / 5;
     finRight.parent = hull;
 
-    // Material for all parts
-    const subMat = new BABYLON.StandardMaterial('submarineMat', this.scene);
-    subMat.diffuseColor = new BABYLON.Color3(0.9, 0.8, 0.1); // Bright yellow
-    subMat.specularColor = new BABYLON.Color3(0.6, 0.6, 0.6);
-    subMat.emissiveColor = new BABYLON.Color3(0.1, 0.1, 0); // Slight glow
+    // Top fin (rudder)
+    const topFin = BABYLON.MeshBuilder.CreateBox(
+      'topFin',
+      {
+        width: 0.15,
+        height: 1.2,
+        depth: 1.2,
+      },
+      this.scene
+    );
+    topFin.position.set(0, 0.6, -2);
+    topFin.rotation.x = Math.PI / 5;
+    topFin.parent = hull;
 
+    // Windows (viewport circles)
+    const window1 = BABYLON.MeshBuilder.CreateCylinder('window1', {
+      height: 0.1, diameter: 0.4, tessellation: 16
+    }, this.scene);
+    window1.rotation.x = Math.PI / 2;
+    window1.position.set(0, 0, 2);
+    window1.parent = hull;
+
+    const window2 = BABYLON.MeshBuilder.CreateCylinder('window2', {
+      height: 0.1, diameter: 0.3, tessellation: 16
+    }, this.scene);
+    window2.rotation.x = Math.PI / 2;
+    window2.position.set(0, 0, 1);
+    window2.parent = hull;
+
+    // Materials
+    const subMat = new BABYLON.StandardMaterial('submarineMat', this.scene);
+    subMat.diffuseColor = new BABYLON.Color3(1, 0.9, 0.2); // Bright yellow-gold
+    subMat.specularColor = new BABYLON.Color3(0.8, 0.8, 0.8); // Shiny metal
+    subMat.specularPower = 32; // Glossy finish
+    subMat.emissiveColor = new BABYLON.Color3(0.15, 0.13, 0.02); // Subtle glow
+
+    // Window material (dark glass)
+    const windowMat = new BABYLON.StandardMaterial('windowMat', this.scene);
+    windowMat.diffuseColor = new BABYLON.Color3(0.1, 0.15, 0.2); // Dark blue-gray
+    windowMat.specularColor = new BABYLON.Color3(1, 1, 1);
+    windowMat.specularPower = 128; // Very glossy
+    windowMat.emissiveColor = new BABYLON.Color3(0.05, 0.1, 0.15); // Slight inner glow
+
+    // Apply materials
     hull.material = subMat;
     nose.material = subMat;
+    propHousing.material = subMat;
+    propBlade1.material = subMat;
+    propBlade2.material = subMat;
     tower.material = subMat;
+    towerTop.material = subMat;
     finLeft.material = subMat;
     finRight.material = subMat;
+    topFin.material = subMat;
+    window1.material = windowMat;
+    window2.material = windowMat;
 
     // Return hull mesh (has collision support)
     return hull;
@@ -197,10 +284,10 @@ export class Submarine {
     // Calculate movement vector
     const forward = this.mesh.forward;
     const right = this.mesh.right;
-    const up = this.mesh.up;
 
     const movement = new BABYLON.Vector3(0, 0, 0);
 
+    // Horizontal movement (relative to submarine orientation)
     if (direction.forward) {
       movement.addInPlace(forward.scale(this.moveSpeed * deltaTime));
     }
@@ -213,11 +300,13 @@ export class Submarine {
     if (direction.left) {
       movement.addInPlace(right.scale(-this.moveSpeed * deltaTime));
     }
+
+    // Depth control (SPACE/SHIFT) - always world Y-axis for intuitive depth changes
     if (direction.up) {
-      movement.addInPlace(up.scale(this.moveSpeed * deltaTime));
+      movement.y += this.moveSpeed * deltaTime;  // Rise (decrease depth)
     }
     if (direction.down) {
-      movement.addInPlace(up.scale(-this.moveSpeed * deltaTime));
+      movement.y -= this.moveSpeed * deltaTime;  // Sink (increase depth)
     }
 
     // Apply movement with collision detection

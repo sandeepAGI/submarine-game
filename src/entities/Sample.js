@@ -124,8 +124,8 @@ export class Sample {
 
   createFallbackMesh() {
     // Create improved sample mesh based on type
-    // Sizes are 3-5x larger than realistic for gameplay visibility
-    const size = (this.data.size || 1) * 3;
+    // Sizes are 5x larger than realistic for gameplay visibility
+    const size = (this.data.size || 1) * 5;
 
     // Different shapes for different sample types - more distinctive
     let shape;
@@ -254,8 +254,9 @@ export class Sample {
     // Parse color string (hex format)
     const color = this.parseColor(this.data.color);
     mat.diffuseColor = color;
-    mat.emissiveColor = color.scale(0.4); // Stronger glow for visibility
-    mat.specularColor = new BABYLON.Color3(0.3, 0.3, 0.3);
+    mat.emissiveColor = color.scale(0.6); // Strong glow for visibility underwater
+    mat.specularColor = new BABYLON.Color3(0.8, 0.8, 0.8); // Shiny appearance
+    mat.specularPower = 32; // Glossy highlight
 
     // Apply material to all meshes in shape
     if (shape.getChildMeshes) {
