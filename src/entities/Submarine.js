@@ -2,6 +2,9 @@ import * as BABYLON from '@babylonjs/core';
 import '@babylonjs/loaders/glTF'; // Required for GLB loading
 import { GAME_CONFIG, INITIAL_STATE } from '../data/config.js';
 
+// Spawn position constant (at surface, near origin)
+const SPAWN_POSITION = new BABYLON.Vector3(0, -1, 0);
+
 /**
  * Submarine entity - the player's vessel
  */
@@ -10,7 +13,7 @@ export class Submarine {
     this.scene = scene;
     this.camera = camera;
     this.mesh = null;
-    this.position = new BABYLON.Vector3(0, -1, 0); // Start at surface
+    this.position = SPAWN_POSITION.clone(); // Start at surface
     this.rotation = new BABYLON.Vector3(0, 0, 0);
 
     // Submarine state
@@ -19,7 +22,7 @@ export class Submarine {
     this.depth = 0;
     this.moveSpeed = INITIAL_STATE.moveSpeed;
     this.rotationSpeed = GAME_CONFIG.BASE_ROTATION_SPEED;
-    this.isUnderwater = true;
+    this.isUnderwater = false;  // Start at surface - oxygen shouldn't deplete initially
 
     // Inventory
     this.inventory = [];
@@ -273,21 +276,23 @@ export class Submarine {
   }
 
   updateCameraTarget() {
-    // Lock camera to submarine mesh so it follows automatically
-    // ArcRotateCamera will orbit around the submarine
-    if (this.camera) {
-      this.camera.lockedTarget = this.mesh;
+    // Update camera target to current submarine position
+    // Must be called continuously for camera to follow movement
+    if (this.camera && this.mesh) {
+      this.camera.setTarget(this.mesh.position);
     }
   }
 
   move(direction, deltaTime) {
-    // Calculate movement vector
-    const forward = this.mesh.forward;
-    const right = this.mesh.right;
+    // Calculate movement vector using world-space directions
+    // NOTE: Using world directions for arcade-style tank controls
+    // Babylon.js meshes don't have .forward/.right properties by default
+    const forward = new BABYLON.Vector3(0, 0, 1);  // World Z-axis (forward)
+    const right = new BABYLON.Vector3(1, 0, 0);    // World X-axis (right)
 
     const movement = new BABYLON.Vector3(0, 0, 0);
 
-    // Horizontal movement (relative to submarine orientation)
+    // Horizontal movement (world-relative for predictable controls)
     if (direction.forward) {
       movement.addInPlace(forward.scale(this.moveSpeed * deltaTime));
     }
@@ -314,6 +319,9 @@ export class Submarine {
 
     // Update position reference
     this.position = this.mesh.position.clone();
+
+    // Update camera to follow submarine
+    this.updateCameraTarget();
   }
 
   rotate(rotation, deltaTime) {
@@ -376,8 +384,8 @@ export class Submarine {
   }
 
   respawn() {
-    // Reset position to surface
-    this.mesh.position = new BABYLON.Vector3(0, -2, 0);
+    // Reset position to surface (use same spawn position as constructor)
+    this.mesh.position = SPAWN_POSITION.clone();
     this.position = this.mesh.position.clone();
 
     // Reset oxygen
@@ -386,7 +394,8 @@ export class Submarine {
     // Clear inventory (lost on death)
     this.clearInventory();
 
-    this.isUnderwater = true;
+    // Reset underwater state (at surface initially)
+    this.isUnderwater = false;
   }
 
   // Upgrade methods

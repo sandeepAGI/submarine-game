@@ -9,6 +9,7 @@ export class ResearchShip {
     this.scene = scene;
     this.mesh = null;
     this.position = new BABYLON.Vector3(0, 0, 0); // At surface, origin
+    this.baseY = 0; // Base Y position for bobbing animation
 
     this.create();
   }
@@ -42,6 +43,13 @@ export class ResearchShip {
         this.mesh.position = new BABYLON.Vector3(0, 0, 0);
         this.mesh.scaling = new BABYLON.Vector3(2, 2, 2);
 
+        // Disable collision on ship (player should pass through to interact)
+        this.mesh.checkCollisions = false;
+        result.meshes.forEach(mesh => mesh.checkCollisions = false);
+
+        // Update baseY for bobbing animation to use new mesh position
+        this.baseY = this.mesh.position.y;
+
         // Dispose old fallback mesh
         oldMesh.dispose();
 
@@ -65,7 +73,7 @@ export class ResearchShip {
       this.scene
     );
 
-    shipBase.position = new BABYLON.Vector3(0, 1, 0); // Floating on surface
+    shipBase.position = new BABYLON.Vector3(0, 0, 0); // At surface (consistent with loaded model)
 
     // Create ship superstructure (cabin/tower)
     const cabin = BABYLON.MeshBuilder.CreateBox(
@@ -132,12 +140,13 @@ export class ResearchShip {
 
   addBobbingAnimation() {
     // Gentle up-down bobbing to simulate floating
-    const baseY = this.mesh.position.y;
+    // Store baseY as instance variable so it can be updated when model loads
+    this.baseY = this.mesh.position.y;
 
     this.scene.registerBeforeRender(() => {
       if (this.mesh) {
         const time = performance.now() * 0.0005;
-        this.mesh.position.y = baseY + Math.sin(time) * 0.3;
+        this.mesh.position.y = this.baseY + Math.sin(time) * 0.3;
       }
     });
   }

@@ -14,6 +14,7 @@ import { UpgradeSystem } from './systems/UpgradeSystem.js';
 import { HUD } from './ui/HUD.js';
 import { ResearchShipUI } from './ui/ResearchShipUI.js';
 import { HelpUI } from './ui/HelpUI.js';
+import { GAME_CONFIG } from './data/config.js';
 import samplesData from './data/samples.json';
 
 /**
@@ -87,8 +88,8 @@ class Game {
     });
 
     // Setup collection callback
-    this.collectionSystem.setSampleCollectedCallback((sample) => {
-      this.handleSampleCollected(sample);
+    this.collectionSystem.setSampleCollectedCallback((sampleEntity, sampleData) => {
+      this.handleSampleCollected(sampleEntity, sampleData);
     });
 
     // Add systems to engine
@@ -152,8 +153,8 @@ class Game {
   spawnSamples(count) {
     const samples = samplesData.samples;
     const oceanSize = 200;
-    const minDepth = -10;
-    const maxDepth = -45;
+    const minY = -20;  // Start deeper to prevent tall meshes reaching surface
+    const maxY = -50;  // Extend depth range for more vertical space
 
     for (let i = 0; i < count; i++) {
       // Random sample type
@@ -162,7 +163,7 @@ class Game {
       // Random position
       const x = (Math.random() - 0.5) * oceanSize * 0.8;
       const z = (Math.random() - 0.5) * oceanSize * 0.8;
-      const y = minDepth + Math.random() * (maxDepth - minDepth);
+      const y = minY + Math.random() * (maxY - minY);
 
       const position = new BABYLON.Vector3(x, y, z);
       const sample = new Sample(this.engine.scene, sampleData, position, this.guiTexture);
@@ -200,7 +201,7 @@ class Game {
   checkResearchShipInteraction() {
     // Check if at surface and near research ship (position 0,0,0)
     const atSurface = this.ocean.isAtSurface(this.submarine.position);
-    const nearShip = this.submarine.position.length() < 10; // Within 10 meters of origin
+    const nearShip = this.submarine.position.length() < GAME_CONFIG.UI_INTERACTION_RANGE;
 
     // Update cooldown timer
     this.lastUIOpenTime += this.engine.engine.getDeltaTime() / 1000;
@@ -222,8 +223,11 @@ class Game {
     this.researchShipUI.close();
   }
 
-  handleSampleCollected(sample) {
-    this.hud.showMessage(`Collected: ${sample.name}`);
+  handleSampleCollected(sampleEntity, sampleData) {
+    this.hud.showMessage(`Collected: ${sampleData.name}`);
+
+    // Remove collected sample from entity array to free memory
+    this.engine.removeEntity('sample', sampleEntity);
   }
 
   handleQuestAccepted(quest) {

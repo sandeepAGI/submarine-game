@@ -48,9 +48,9 @@ export class CollectionSystem {
       if (submarine.addToInventory(sampleData)) {
         nearest.collect();
 
-        // Trigger callback
+        // Trigger callback with both sample entity and data
         if (this.onSampleCollected) {
-          this.onSampleCollected(sampleData);
+          this.onSampleCollected(nearest, sampleData);
         }
         return true;
       }

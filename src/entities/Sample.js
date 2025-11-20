@@ -110,7 +110,8 @@ export class Sample {
   updateLabelVisibility(playerPosition, maxDistance = 8) {
     if (!this.label || this.collected) return;
 
-    const distance = BABYLON.Vector3.Distance(playerPosition, this.position);
+    // Use mesh.position (updated by animation) instead of cached this.position
+    const distance = BABYLON.Vector3.Distance(playerPosition, this.mesh.position);
 
     if (distance < maxDistance) {
       // Fade in based on distance
@@ -295,7 +296,8 @@ export class Sample {
   }
 
   distanceTo(position) {
-    return BABYLON.Vector3.Distance(this.position, position);
+    // Use mesh.position (updated by animation) for accurate distance
+    return BABYLON.Vector3.Distance(this.mesh.position, position);
   }
 
   collect() {
