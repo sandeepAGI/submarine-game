@@ -108,7 +108,8 @@ export class Sample {
   }
 
   updateLabelVisibility(playerPosition, maxDistance = 8) {
-    if (!this.label || this.collected) return;
+    // If label doesn't exist, sample was collected (label disposed)
+    if (!this.label) return;
 
     // Use mesh.position (updated by animation) instead of cached this.position
     const distance = BABYLON.Vector3.Distance(playerPosition, this.mesh.position);
@@ -286,13 +287,16 @@ export class Sample {
     const amplitude = 0.3;
     const frequency = 1 + Math.random() * 0.5;
 
-    this.scene.registerBeforeRender(() => {
+    // Store callback reference for cleanup
+    this.animationCallback = () => {
       if (!this.collected && this.mesh) {
         const time = performance.now() * 0.001;
         this.mesh.position.y = baseY + Math.sin(time * frequency) * amplitude;
         this.mesh.rotation.y += 0.01;
       }
-    });
+    };
+
+    this.scene.registerBeforeRender(this.animationCallback);
   }
 
   distanceTo(position) {
@@ -302,6 +306,13 @@ export class Sample {
 
   collect() {
     this.collected = true;
+
+    // Unregister animation callback to prevent memory leak
+    if (this.animationCallback) {
+      this.scene.unregisterBeforeRender(this.animationCallback);
+      this.animationCallback = null;
+    }
+
     if (this.label) {
       this.label.dispose();
       this.label = null;
@@ -313,6 +324,12 @@ export class Sample {
   }
 
   dispose() {
+    // Unregister animation callback
+    if (this.animationCallback) {
+      this.scene.unregisterBeforeRender(this.animationCallback);
+      this.animationCallback = null;
+    }
+
     if (this.label) {
       this.label.dispose();
       this.label = null;

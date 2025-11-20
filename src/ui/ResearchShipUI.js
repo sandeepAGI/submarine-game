@@ -140,12 +140,14 @@ export class ResearchShipUI {
 
     if (result.success && this.onUpgradePurchased) {
       this.onUpgradePurchased(result);
+      // Credits are deducted in the callback (main.js handleUpgradePurchased)
+      // Update local UI credits to match
+      this.credits -= result.cost;
     } else {
       alert(result.message);
     }
 
-    // Refresh UI
-    this.credits -= result.cost || 0;
+    // Refresh UI to show updated state
     this.updateUpgradeSection();
   }
 

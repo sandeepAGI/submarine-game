@@ -35,7 +35,7 @@ class Game {
     // Game state
     this.credits = 0;
     this.gameStarted = false;
-    this.lastUIOpenTime = 0;
+    this.timeSinceUIOpen = 0;  // Duration counter for UI cooldown
     this.uiOpenCooldown = 0.5; // 500ms cooldown
 
     // Systems
@@ -204,13 +204,13 @@ class Game {
     const nearShip = this.submarine.position.length() < GAME_CONFIG.UI_INTERACTION_RANGE;
 
     // Update cooldown timer
-    this.lastUIOpenTime += this.engine.engine.getDeltaTime() / 1000;
+    this.timeSinceUIOpen += this.engine.engine.getDeltaTime() / 1000;
 
     // Listen for E key to open UI with cooldown
     if (atSurface && nearShip && this.input.isKeyPressed('e') &&
-        !this.researchShipUI.isOpen() && this.lastUIOpenTime >= this.uiOpenCooldown) {
+        !this.researchShipUI.isOpen() && this.timeSinceUIOpen >= this.uiOpenCooldown) {
       this.openResearchShipUI();
-      this.lastUIOpenTime = 0; // Reset cooldown
+      this.timeSinceUIOpen = 0; // Reset cooldown
     }
   }
 
@@ -242,13 +242,17 @@ class Game {
   handleUpgradePurchased(result) {
     this.credits -= result.cost;
 
-    // Apply upgrade to submarine
+    // Apply upgrade to submarine based on category
     if (result.category === 'oxygen') {
       this.submarine.upgradeOxygen(result.upgrade.maxOxygen);
       this.hud.showMessage(`Upgraded: ${result.upgrade.name}`);
     } else if (result.category === 'speed') {
       this.submarine.upgradeSpeed(result.upgrade.speedMultiplier);
       this.hud.showMessage(`Upgraded: ${result.upgrade.name}`);
+    } else {
+      // Default case for unknown upgrade categories
+      console.warn(`Unknown upgrade category: ${result.category}`);
+      this.hud.showMessage(`Upgrade applied: ${result.upgrade.name}`);
     }
   }
 

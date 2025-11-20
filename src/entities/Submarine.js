@@ -40,18 +40,21 @@ export class Submarine {
     this.mesh.ellipsoid = new BABYLON.Vector3(1, 1, 2);
 
     // Add headlight to submarine
+    // Position at front of submarine
     this.light = new BABYLON.SpotLight(
       'submarineLight',
-      this.mesh.position.clone(),
-      new BABYLON.Vector3(0, 0, 1),
-      Math.PI / 3,
-      2,
+      new BABYLON.Vector3(0, 0, 3),  // At front (local coords)
+      new BABYLON.Vector3(0, 0, 1),  // Direction: forward in world space
+      Math.PI / 3,  // Cone angle
+      2,  // Exponent
       this.scene
     );
     this.light.diffuse = new BABYLON.Color3(1, 1, 0.8);
     this.light.intensity = 1.2;
     this.light.range = 35;
     this.light.parent = this.mesh;
+
+    // Note: Light inherits mesh rotation, ensuring it always points forward
 
     // Set camera target to submarine (third-person)
     this.updateCameraTarget();

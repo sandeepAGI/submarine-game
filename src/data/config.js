@@ -20,7 +20,6 @@ export const GAME_CONFIG = {
   BASE_INVENTORY_CAPACITY: 5,
 
   // Research Ship
-  RESEARCH_SHIP_POSITION: { x: 0, y: 0, z: 0 },
   UI_INTERACTION_RANGE: 5,
 
   // Visual

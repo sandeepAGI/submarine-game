@@ -126,15 +126,15 @@ export class ResearchShip {
   }
 
   addShipLight() {
-    // Add a bright light to the ship for visibility
+    // Add a light to the ship for visibility (reduced brightness for atmosphere)
     const shipLight = new BABYLON.PointLight(
       'shipLight',
       new BABYLON.Vector3(0, 5, 0),
       this.scene
     );
     shipLight.diffuse = new BABYLON.Color3(1, 0.8, 0.4);
-    shipLight.intensity = 2.5; // Brighter for better visibility
-    shipLight.range = 60; // Longer range
+    shipLight.intensity = 1.5; // Reduced from 2.5 to avoid washing out scene
+    shipLight.range = 40; // Reduced from 60 for more focused lighting
     shipLight.parent = this.mesh;
   }
 

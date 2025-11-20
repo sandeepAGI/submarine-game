@@ -90,13 +90,16 @@ export class HelpUI {
   }
 
   setupHelpToggle() {
-    // Listen for H key to toggle help
+    // Listen for H key (toggle) and ESC key (close only)
     window.addEventListener('keydown', (evt) => {
-      if (evt.key === 'h' || evt.key === 'H' || evt.key === 'Escape') {
-        if (this.visible || evt.key !== 'Escape') {
-          this.toggle();
-          evt.preventDefault();
-        }
+      if (evt.key === 'h' || evt.key === 'H') {
+        // H key always toggles
+        this.toggle();
+        evt.preventDefault();
+      } else if (evt.key === 'Escape' && this.visible) {
+        // ESC only closes if help is visible
+        this.hide();
+        evt.preventDefault();
       }
     });
   }
