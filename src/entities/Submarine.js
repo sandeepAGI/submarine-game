@@ -100,12 +100,11 @@ export class Submarine {
 
   createFallbackMesh() {
     // Create improved submarine shape using cylinders and spheres
-    const parent = new BABYLON.TransformNode('submarine', this.scene);
-    parent.position = this.position.clone();
+    // Use hull as main mesh (supports collision), parent other parts to it
 
-    // Main hull (horizontal cylinder)
+    // Main hull (horizontal cylinder) - THIS IS THE MAIN MESH
     const hull = BABYLON.MeshBuilder.CreateCylinder(
-      'submarineHull',
+      'submarine',
       {
         height: 4,      // Length of submarine
         diameter: 1.5,  // Width
@@ -114,7 +113,7 @@ export class Submarine {
       this.scene
     );
     hull.rotation.x = Math.PI / 2; // Rotate to horizontal
-    hull.parent = parent;
+    hull.position = this.position.clone();
 
     // Front nose cone
     const nose = BABYLON.MeshBuilder.CreateSphere(
@@ -127,7 +126,7 @@ export class Submarine {
     );
     nose.position.z = 2; // Position at front
     nose.scaling.z = 0.8; // Elongate forward
-    nose.parent = parent;
+    nose.parent = hull;
 
     // Conning tower (periscope housing)
     const tower = BABYLON.MeshBuilder.CreateCylinder(
@@ -141,7 +140,7 @@ export class Submarine {
     );
     tower.position.y = 0.8;
     tower.position.z = -0.5;
-    tower.parent = parent;
+    tower.parent = hull;
 
     // Rear stabilizer fins
     const finLeft = BABYLON.MeshBuilder.CreateBox(
@@ -155,7 +154,7 @@ export class Submarine {
     );
     finLeft.position.set(-0.6, 0, -1.8);
     finLeft.rotation.z = Math.PI / 6;
-    finLeft.parent = parent;
+    finLeft.parent = hull;
 
     const finRight = BABYLON.MeshBuilder.CreateBox(
       'finRight',
@@ -168,7 +167,7 @@ export class Submarine {
     );
     finRight.position.set(0.6, 0, -1.8);
     finRight.rotation.z = -Math.PI / 6;
-    finRight.parent = parent;
+    finRight.parent = hull;
 
     // Material for all parts
     const subMat = new BABYLON.StandardMaterial('submarineMat', this.scene);
@@ -182,7 +181,8 @@ export class Submarine {
     finLeft.material = subMat;
     finRight.material = subMat;
 
-    return parent;
+    // Return hull mesh (has collision support)
+    return hull;
   }
 
   updateCameraTarget() {
