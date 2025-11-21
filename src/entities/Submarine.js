@@ -70,6 +70,8 @@ export class Submarine {
 
   async loadModel() {
     try {
+      console.log('🔄 Loading submarine.glb (2.5MB)...');
+
       // Attempt to load GLB model
       const result = await BABYLON.SceneLoader.ImportMeshAsync(
         '',
@@ -79,6 +81,8 @@ export class Submarine {
       );
 
       if (result.meshes && result.meshes.length > 0) {
+        console.log(`✅ Submarine 3D model loaded! (${result.meshes.length} meshes)`);
+
         // Model loaded successfully - replace fallback
         const oldMesh = this.mesh;
         this.mesh = result.meshes[0];
@@ -93,17 +97,21 @@ export class Submarine {
         // Re-parent light
         this.light.parent = this.mesh;
 
+        // Re-parent bubble system
+        if (this.bubbleSystem) {
+          this.bubbleSystem.emitter = this.mesh;
+        }
+
         // Update camera target
         this.updateCameraTarget();
 
         // Dispose old fallback mesh
         oldMesh.dispose();
-
-        console.log('Submarine 3D model loaded successfully');
       }
     } catch (error) {
       // Keep using fallback mesh
-      console.log('Submarine 3D model not found, using fallback primitive shape');
+      console.warn('⚠️ Submarine 3D model not found, using fallback procedural model');
+      console.error('Error details:', error.message);
     }
   }
 

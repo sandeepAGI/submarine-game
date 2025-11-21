@@ -28,6 +28,8 @@ export class ResearchShip {
 
   async loadModel() {
     try {
+      console.log('🔄 Loading research_ship.glb (48KB)...');
+
       // Attempt to load GLB model
       const result = await BABYLON.SceneLoader.ImportMeshAsync(
         '',
@@ -37,6 +39,8 @@ export class ResearchShip {
       );
 
       if (result.meshes && result.meshes.length > 0) {
+        console.log(`✅ Research Ship 3D model loaded! (${result.meshes.length} meshes)`);
+
         // Model loaded successfully - replace fallback
         const oldMesh = this.mesh;
         this.mesh = result.meshes[0];
@@ -52,12 +56,11 @@ export class ResearchShip {
 
         // Dispose old fallback mesh
         oldMesh.dispose();
-
-        console.log('Research Ship 3D model loaded successfully');
       }
     } catch (error) {
       // Keep using fallback mesh
-      console.log('Research Ship 3D model not found, using fallback shape');
+      console.warn('⚠️ Research Ship 3D model not found, using fallback procedural model');
+      console.error('Error details:', error.message);
     }
   }
 
