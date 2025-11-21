@@ -1,5 +1,6 @@
 import * as BABYLON from '@babylonjs/core';
-import { WaterMaterial } from '@babylonjs/materials/water';
+import '@babylonjs/materials/water/waterMaterial';
+import { WaterMaterial } from '@babylonjs/materials';
 import { GAME_CONFIG } from '../data/config.js';
 
 /**
