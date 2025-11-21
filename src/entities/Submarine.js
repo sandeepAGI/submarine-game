@@ -59,6 +59,9 @@ export class Submarine {
     // Set camera target to submarine (third-person)
     this.updateCameraTarget();
 
+    // Create bubble trail effect
+    this.createBubbleSystem();
+
     // Try to load 3D model in background (will replace fallback if found)
     this.loadModel();
 
@@ -427,6 +430,11 @@ export class Submarine {
 
     // Update camera to follow submarine
     this.updateCameraTarget();
+
+    // Update bubble emission based on movement
+    const isMoving = movement.lengthSquared() > 0;
+    const currentSpeed = movement.length() / deltaTime;
+    this.updateBubbleEmission(isMoving, currentSpeed);
   }
 
   rotate(rotation, deltaTime) {
@@ -461,6 +469,70 @@ export class Submarine {
       if (this.oxygen > this.maxOxygen) {
         this.oxygen = this.maxOxygen;
       }
+    }
+  }
+
+  createBubbleSystem() {
+    // Create bubble particle system for submarine movement trail
+    const bubbleSystem = new BABYLON.ParticleSystem('submarineBubbles', 500, this.scene);
+
+    // Use a simple white circular particle
+    bubbleSystem.particleTexture = new BABYLON.Texture(
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAE0lEQVQYV2P8////fwYGBgZGBgYAVfwJ/V5xXCMAAAAASUVORK5CYII=',
+      this.scene
+    );
+
+    // Emit from rear of submarine
+    bubbleSystem.emitter = this.mesh;
+    bubbleSystem.minEmitBox = new BABYLON.Vector3(-0.5, -0.5, -2); // Rear of submarine
+    bubbleSystem.maxEmitBox = new BABYLON.Vector3(0.5, 0.5, -2);
+
+    // Bubble appearance - white/light blue, semi-transparent
+    bubbleSystem.color1 = new BABYLON.Color4(0.9, 0.95, 1.0, 0.6);
+    bubbleSystem.color2 = new BABYLON.Color4(0.8, 0.9, 1.0, 0.4);
+    bubbleSystem.colorDead = new BABYLON.Color4(0.7, 0.8, 0.9, 0.0);
+
+    // Small bubble sizes
+    bubbleSystem.minSize = 0.1;
+    bubbleSystem.maxSize = 0.3;
+
+    // Short lifetime (bubbles don't last long)
+    bubbleSystem.minLifeTime = 0.5;
+    bubbleSystem.maxLifeTime = 1.5;
+
+    // Low emission rate initially (will increase with speed)
+    bubbleSystem.emitRate = 20;
+    bubbleSystem.minEmitRate = 5;  // Store for later adjustment
+    bubbleSystem.maxEmitRate = 80;
+
+    // Bubbles rise upward
+    bubbleSystem.direction1 = new BABYLON.Vector3(-0.2, 0.8, -0.2);
+    bubbleSystem.direction2 = new BABYLON.Vector3(0.2, 1.2, 0.2);
+    bubbleSystem.minEmitPower = 0.5;
+    bubbleSystem.maxEmitPower = 1.0;
+    bubbleSystem.updateSpeed = 0.02;
+
+    // Gravity - upward force (buoyancy)
+    bubbleSystem.gravity = new BABYLON.Vector3(0, 2, 0);
+
+    // Start with minimal bubbles (stationary submarine)
+    bubbleSystem.emitRate = 5;
+    bubbleSystem.start();
+
+    this.bubbleSystem = bubbleSystem;
+    this.isMoving = false;
+  }
+
+  updateBubbleEmission(isMoving, speed) {
+    if (!this.bubbleSystem) return;
+
+    // Only emit bubbles when underwater and moving
+    if (!this.isUnderwater || !isMoving) {
+      this.bubbleSystem.emitRate = 5; // Minimal bubbles when stationary
+    } else {
+      // Scale emission rate with speed (faster = more bubbles)
+      const speedFactor = Math.min(speed / this.moveSpeed, 1.5);
+      this.bubbleSystem.emitRate = 20 + (speedFactor * 60); // 20-80 bubbles/sec
     }
   }
 

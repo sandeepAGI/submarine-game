@@ -112,6 +112,20 @@ class Game {
       update: () => this.checkResearchShipInteraction(),
     });
 
+    // Add fog update system (updates fog based on submarine depth)
+    this.engine.addSystem({
+      update: () => {
+        const depth = this.ocean.getDepthAtPosition(this.submarine.position);
+        this.ocean.updateFogForDepth(depth);
+      },
+    });
+
+    // Add water reflections after all entities are created
+    this.ocean.addWaterReflections([
+      this.submarine.mesh,
+      this.researchShip.mesh,
+    ]);
+
     // Create UI
     this.hud = new HUD();
     this.researchShipUI = new ResearchShipUI(this.questSystem, this.upgradeSystem);

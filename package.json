@@ -18,7 +18,8 @@
   "dependencies": {
     "@babylonjs/core": "^8.37.0",
     "@babylonjs/gui": "^8.37.3",
-    "@babylonjs/loaders": "^8.37.3"
+    "@babylonjs/loaders": "^8.37.3",
+    "@babylonjs/materials": "^8.38.0"
   },
   "devDependencies": {
     "vite": "^7.2.2"
