@@ -43,9 +43,9 @@ export class ResearchShip {
         this.mesh.position = new BABYLON.Vector3(0, 0, 0);
         this.mesh.scaling = new BABYLON.Vector3(2, 2, 2);
 
-        // Disable collision on ship (player should pass through to interact)
-        this.mesh.checkCollisions = false;
-        result.meshes.forEach(mesh => mesh.checkCollisions = false);
+        // Enable collision on ship (player cannot pass through)
+        this.mesh.checkCollisions = true;
+        result.meshes.forEach(mesh => mesh.checkCollisions = true);
 
         // Update baseY for bobbing animation to use new mesh position
         this.baseY = this.mesh.position.y;
@@ -430,9 +430,9 @@ export class ResearchShip {
     beaconMat.specularColor = new BABYLON.Color3(0.5, 0.5, 0);
     beacon.material = beaconMat;
 
-    // Make ship non-collidable (player can pass through to interact)
-    hull.checkCollisions = false;
-    hull.getChildMeshes().forEach(child => child.checkCollisions = false);
+    // Enable ship collision (submarine cannot pass through)
+    hull.checkCollisions = true;
+    hull.getChildMeshes().forEach(child => child.checkCollisions = true);
 
     return hull;
   }

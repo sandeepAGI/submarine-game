@@ -425,6 +425,11 @@ export class Submarine {
     // Apply movement with collision detection
     this.mesh.moveWithCollisions(movement);
 
+    // Constrain submarine to stay at or below water surface (y = 0)
+    if (this.mesh.position.y > 0) {
+      this.mesh.position.y = 0; // Clamp to surface level
+    }
+
     // Update position reference
     this.position = this.mesh.position.clone();
 
