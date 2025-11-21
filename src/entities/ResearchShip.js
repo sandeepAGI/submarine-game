@@ -8,7 +8,7 @@ export class ResearchShip {
   constructor(scene) {
     this.scene = scene;
     this.mesh = null;
-    this.position = new BABYLON.Vector3(0, 0, 0); // At surface, origin
+    this.position = new BABYLON.Vector3(0, 0, 30); // At surface, forward of submarine spawn
     this.baseY = 0; // Base Y position for bobbing animation
 
     this.create();
@@ -40,7 +40,7 @@ export class ResearchShip {
         // Model loaded successfully - replace fallback
         const oldMesh = this.mesh;
         this.mesh = result.meshes[0];
-        this.mesh.position = new BABYLON.Vector3(0, 0, 0);
+        this.mesh.position = this.position.clone(); // Use spawn position
         this.mesh.scaling = new BABYLON.Vector3(2, 2, 2);
 
         // Enable collision on ship (player cannot pass through)
@@ -74,7 +74,8 @@ export class ResearchShip {
       },
       this.scene
     );
-    hull.position = new BABYLON.Vector3(0, -1, 0); // Partially submerged
+    hull.position = this.position.clone(); // Use spawn position
+    hull.position.y = -1; // Keep hull partially submerged (adjust Y only)
 
     // Create bow (front tapered section)
     const bow = BABYLON.MeshBuilder.CreateCylinder(
